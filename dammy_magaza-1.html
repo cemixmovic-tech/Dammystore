@@ -1,0 +1,1955 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f4f6fb">
+<meta name="apple-mobile-web-app-title" content="Dammy">
+<title>Dammy — Erkek Giyim</title>
+<!-- Fonts embedded offline -->
+<!-- Barcode generation -->
+
+<!-- AUTH SCREEN -->
+<div id="authScreen" style="position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#e8edf8,#f4f6fb);display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border:1px solid #dde2ef;border-radius:22px;padding:36px 32px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(0,0,0,0.12);animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:52px;margin-bottom:8px">👔</div>
+      <div style="font-family:system-ui,sans-serif;font-weight:800;font-size:24px;font-weight:800;color:#e6920a">Dammy</div>
+      <div style="font-size:12px;color:#7a849e;margin-top:4px">Erkek Giyim · Mağaza Sistemi</div>
+    </div>
+    <!-- Role buttons -->
+    <div id="authRoleStep">
+      <div style="font-size:13px;color:#7a849e;text-align:center;margin-bottom:16px;font-weight:600">Giriş Türü Seçin</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="selectRole('manager')" style="background:linear-gradient(135deg,#e6920a,#c97a06);color:#fff;border:none;padding:16px 20px;border-radius:13px;font-family:system-ui,sans-serif;font-weight:800;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(230,146,10,0.3);">
+          <span style="font-size:24px">👑</span><div style="text-align:left"><div>Yönetici Girişi</div><div style="font-size:11px;font-weight:400;opacity:0.85">Tüm yetkiler · Raporlar · Personel</div></div>
+        </button>
+        <button onclick="selectRole('staff')" style="background:linear-gradient(135deg,#2176d9,#1a5cb8);color:#fff;border:none;padding:16px 20px;border-radius:13px;font-family:system-ui,sans-serif;font-weight:800;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:12px;box-shadow:0 4px 15px rgba(33,118,217,0.3);">
+          <span style="font-size:24px">👤</span><div style="text-align:left"><div>Personel Girişi</div><div style="font-size:11px;font-weight:400;opacity:0.85">Satış · Barkod · Kendi Cirosu</div></div>
+        </button>
+      </div>
+    </div>
+    <!-- Login form -->
+    <div id="authFormStep" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;cursor:pointer" onclick="document.getElementById('authRoleStep').style.display='';document.getElementById('authFormStep').style.display='none'">
+        <span style="font-size:18px">←</span>
+        <span id="authFormTitle" style="font-family:system-ui,sans-serif;font-weight:800;font-weight:800;font-size:15px"></span>
+      </div>
+      <div style="margin-bottom:12px" id="authUserRow">
+        <label style="font-size:11px;color:#7a849e;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px">Kullanıcı Adı</label>
+        <input id="authUser" type="text" placeholder="kullaniciadi" style="width:100%;background:#f0f2f8;border:1px solid #dde2ef;color:#1a1e2e;padding:11px 14px;border-radius:9px;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;outline:none;">
+      </div>
+      <div style="margin-bottom:18px">
+        <label style="font-size:11px;color:#7a849e;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:5px">Şifre</label>
+        <input id="authPass" type="password" placeholder="••••••" style="width:100%;background:#f0f2f8;border:1px solid #dde2ef;color:#1a1e2e;padding:11px 14px;border-radius:9px;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;outline:none;" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div id="authError" style="color:#e03e3e;font-size:12px;margin-bottom:12px;display:none;text-align:center;font-weight:600"></div>
+      <button onclick="doLogin()" style="width:100%;background:linear-gradient(135deg,#e6920a,#c97a06);color:#fff;border:none;padding:13px;border-radius:11px;font-family:system-ui,sans-serif;font-weight:800;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 4px 15px rgba(230,146,10,0.3);">Giriş Yap</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Minimal inline EAN-13 barcode renderer
+window.JsBarcode = function(selector, value, opts) {
+  opts = opts || {};
+  var w = opts.width || 2, h = opts.height || 60, margin = opts.margin || 6;
+  var fs = opts.fontSize || 12;
+  var el = typeof selector === "string" ? document.querySelector(selector) : selector;
+  if (!el) return;
+  // EAN13 encoding
+  var L = [[0,0,0,1,1,0,1],[0,0,1,1,0,0,1],[0,0,1,0,0,1,1],[0,1,1,1,1,0,1],[0,1,0,0,0,1,1],[0,1,1,0,0,0,1],[0,1,0,1,1,1,1],[0,1,1,1,0,1,1],[0,1,1,0,1,1,1],[0,0,0,1,0,1,1]];
+  var G = [[0,1,0,0,1,1,1],[0,1,1,0,0,1,1],[0,0,1,1,0,1,1],[0,1,0,0,0,0,1],[0,0,1,1,1,0,1],[0,1,1,1,0,0,1],[0,0,0,0,1,0,1],[0,0,1,0,0,0,1],[0,0,0,1,0,0,1],[0,0,1,0,1,1,1]];
+  var R = [[1,1,1,0,0,1,0],[1,1,0,0,1,1,0],[1,1,0,1,1,0,0],[1,0,0,0,0,1,0],[1,0,1,1,1,0,0],[1,0,0,1,1,1,0],[1,0,1,0,0,0,0],[1,0,0,0,1,0,0],[1,0,0,1,0,0,0],[1,1,1,0,1,0,0]];
+  var P = [['LLLLLL'],['LLGLGG'],['LLGGLG'],['LLGGGL'],['LGLLGG'],['LGGLLG'],['LGGGLL'],['LGLGLG'],['LGLGGL'],['LGGLGL']];
+  var d = value.replace(/\D/g,'').split('').map(Number);
+  if (d.length < 12) return;
+  var first = d[0]; var pat = P[first][0];
+  var bars = [1,0,1];
+  for (var i=0;i<6;i++) { var enc = pat[i]==='L'?L[d[i+1]]:G[d[i+1]]; bars = bars.concat(enc); }
+  bars = bars.concat([0,1,0,1,0]);
+  for (var i=7;i<13;i++) { bars = bars.concat(R[d[i]]); }
+  bars = bars.concat([1,0,1]);
+  var totalW = bars.length * w + margin * 2;
+  var totalH = h + (opts.displayValue ? fs + 6 : 0) + margin * 2;
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="'+totalW+'" height="'+totalH+'">'
+    + '<rect width="'+totalW+'" height="'+totalH+'" fill="white"/>';
+  var x = margin;
+  for (var i=0;i<bars.length;i++) {
+    if (bars[i]) svg += '<rect x="'+x+'" y="'+margin+'" width="'+w+'" height="'+h+'" fill="black"/>';
+    x += w;
+  }
+  if (opts.displayValue !== false) {
+    svg += '<text x="'+Math.round(totalW/2)+'" y="'+Math.round(totalH-3)+'" text-anchor="middle" font-size="'+fs+'" font-family="monospace" fill="black">'+value+'</text>';
+  }
+  svg += '</svg>';
+  el.outerHTML = svg;
+};
+</script>
+
+
+<style>
+:root {
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --surface2: #f0f2f8;
+  --surface3: #e4e8f4;
+  --border: #dde2ef;
+  --accent: #e6920a;
+  --accent2: #c94d1e;
+  --green: #0ba07a;
+  --red: #e03e3e;
+  --blue: #2176d9;
+  --purple: #7c5cdb;
+  --text: #1a1e2e;
+  --muted: #7a849e;
+  --radius: 14px;
+  --sidebar: 250px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ===== LAYOUT ===== */
+.app{display:flex;min-height:100vh;}
+.sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:0;position:fixed;height:100vh;z-index:200;transition:transform 0.3s;box-shadow:2px 0 16px rgba(0,0,0,0.07);}
+.main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+
+/* ===== SIDEBAR ===== */
+.logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);}
+.logo h1{font-family:'Segoe UI',system-ui,sans-serif;font-weight:800;font-size:18px;font-weight:800;color:var(--accent);letter-spacing:-0.5px;display:flex;align-items:center;gap:8px;}
+.logo small{font-size:11px;color:var(--muted);display:block;margin-top:3px;font-weight:300;}
+.store-sel{margin:14px 14px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;transition:border-color 0.2s;}
+.store-sel:hover{border-color:var(--accent);}
+.store-sel label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;display:block;margin-bottom:4px;cursor:pointer;font-weight:600;}
+.store-sel select{width:100%;background:transparent;border:none;color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;font-weight:500;cursor:pointer;outline:none;}
+.store-sel select option{background:var(--surface2);}
+.nav-sec{padding:14px 20px 5px;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;font-size:13px;color:var(--muted);transition:all 0.2s;border-left:3px solid transparent;font-weight:500;user-select:none;}
+.nav-item:hover{color:var(--text);background:var(--surface2);}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(240,180,41,0.08);}
+.nav-item .ni{font-size:16px;width:20px;text-align:center;}
+.nav-badge{background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:auto;}
+
+/* ===== TOPBAR ===== */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,0.06);}
+.topbar-title{font-family:'Segoe UI',system-ui,sans-serif;font-weight:800;font-size:14px;font-weight:800;color:var(--muted);}
+.topbar-title span{color:var(--accent);}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.ham-btn{display:none;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px 8px;}
+
+/* ===== CONTENT ===== */
+.content{flex:1;padding:24px;}
+.section{display:none;animation:fadeIn 0.25s ease;}
+.section.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ===== PAGE HEADER ===== */
+.ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;flex-wrap:wrap;gap:12px;}
+.ph-title{font-family:'Segoe UI',system-ui,sans-serif;font-weight:800;font-size:22px;font-weight:800;}
+.ph-title span{color:var(--accent);}
+.ph-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* ===== BUTTONS ===== */
+.btn{background:var(--accent);color:#0a0c10;border:none;padding:10px 18px;border-radius:9px;font-family:'Segoe UI',system-ui,sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
+.btn:hover{background:#ffc94a;transform:translateY(-1px);box-shadow:0 6px 20px rgba(240,180,41,0.3);}
+.btn:active{transform:translateY(0);}
+.btn-blue{background:var(--blue);color:#fff;}
+.btn-blue:hover{background:#7bc0ff;box-shadow:0 6px 20px rgba(91,168,245,0.3);}
+.btn-green{background:var(--green);color:#fff;}
+.btn-green:hover{background:#4fffd4;box-shadow:0 6px 20px rgba(34,211,164,0.3);}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border);padding:9px 16px;border-radius:9px;font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;font-weight:500;}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-red{background:var(--red);color:#fff;border:none;padding:6px 12px;border-radius:7px;cursor:pointer;font-size:12px;font-family:'Segoe UI',system-ui,sans-serif;font-weight:600;transition:all 0.2s;}
+.btn-red:hover{background:#ff8a8a;}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:7px;}
+.btn-icon{padding:8px 10px;font-size:15px;}
+
+/* ===== STATS ===== */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:all 0.2s;position:relative;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.05);}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.stat.g::before{background:var(--green);}
+.stat.r::before{background:var(--red);}
+.stat.y::before{background:var(--accent);}
+.stat.b::before{background:var(--blue);}
+.stat:hover{border-color:var(--border);transform:translateY(-1px);}
+.stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-weight:700;}
+.stat-val{font-family:'Segoe UI',system-ui,sans-serif;font-weight:800;font-size:22px;font-weight:800;}
+.stat-val.g{color:var(--green);}
+.stat-val.r{color:var(--red);}
+.stat-val.y{color:var(--accent);}
+.stat-val.b{color:var(--blue);}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+
+/* ===== TABLE ===== */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px;box-shadow:0 1px 6px rgba(0,0,0,0.06);}
+.card-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+.card-head h3{font-family:'Segoe UI',system-ui,sans-serif;font-weight:800;font-size:14px;font-weight:800;}
+.tbl{width:100%;border-collapse:collapse;overflow-x:auto;}
+th{text-align:left;padding:11px 16px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;background:var(--surface2);white-space:nowrap;}
+td{padding:12px 16px;font-size:13px;border-top:1px solid var(--border);vertical-align:middle;}
+tr:hover td{background:rgba(255,255,255,0.015);}
+.tbl-wrap{overflow-x:auto;}
+
+/* ===== BADGES ===== */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
+.bg{background:rgba(34,211,164,0.15);color:var(--green);}
+.br{background:rgba(241,107,107,0.15);color:var(--red);}
+.by{background:rgba(240,180,41,0.15);color:var(--accent);}
+.bb{background:rgba(91,168,245,0.15);color:var(--blue);}
+.bp{background:rgba(167,139,250,0.15);color:var(--purple);}
+
+/* ===== MODAL ===== */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);z-index:500;align-items:center;justify-content:center;padding:16px;}
+.overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;animation:popIn 0.28s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 20px 60px rgba(0,0,0,0.15);}
+@keyframes popIn{from{opacity:0;transform:scale(0.88);}to{opacity:1;transform:scale(1);}}
+.modal h2{font-family:'Segoe UI',system-ui,sans-serif;font-weight:800;font-size:17px;font-weight:800;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.fg{margin-bottom:13px;}
+.fg label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px 13px;border-radius:9px;font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;outline:none;transition:border-color 0.2s;}
+.fg input:focus,.fg select:focus{border-color:var(--accent);}
+.fg select option{background:var(--surface2);}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.ma{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;}
+
+/* ===== EMPTY ===== */
+.empty{text-align:center;padding:44px 20px;color:var(--muted);}
+.empty .ei{font-size:38px;margin-bottom:10px;}
+.empty p{font-size:13px;}
+
+/* ===== BAR CHART ===== */
+.bar-chart{padding:18px;}
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:11px;}
+.bar-lbl{width:130px;font-size:12px;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar-track{flex:1;background:var(--surface2);border-radius:4px;height:8px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width 1s cubic-bezier(0.4,0,0.2,1);}
+.bar-val{width:90px;font-size:12px;font-weight:600;color:var(--text);text-align:right;}
+
+/* ===== BARCODE SECTION ===== */
+.barcode-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
+.barcode-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;transition:border-color 0.2s;}
+.barcode-card:hover{border-color:var(--accent);}
+.barcode-card h4{font-family:'Segoe UI',system-ui,sans-serif;font-weight:800;font-size:13px;font-weight:800;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.barcode-card p{font-size:11px;color:var(--muted);margin-bottom:12px;}
+.barcode-svg-wrap{background:#fff;border-radius:8px;padding:10px;margin-bottom:10px;display:flex;align-items:center;justify-content:center;}
+.barcode-svg-wrap svg{max-width:100%;height:auto;}
+.bc-actions{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
+
+/* ===== SCANNER ===== */
+.scanner-container{position:relative;}
+#scanner-view{border-radius:14px;overflow:hidden;border:2px solid var(--accent);background:#1a1a2e;}
+#scanner-view video{width:100%;border-radius:12px;}
+.scan-overlay{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;}
+.scan-frame{width:200px;height:200px;border:3px solid var(--accent);border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,0.5);position:relative;}
+.scan-frame::before,.scan-frame::after{content:'';position:absolute;width:28px;height:28px;border-color:var(--accent);border-style:solid;}
+.scan-frame::before{top:-3px;left:-3px;border-width:4px 0 0 4px;border-radius:4px 0 0 0;}
+.scan-frame::after{bottom:-3px;right:-3px;border-width:0 4px 4px 0;border-radius:0 0 4px 0;}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scanAnim 2s ease-in-out infinite;}
+@keyframes scanAnim{0%{top:10px;}100%{top:calc(100% - 10px);}
+}
+#scan-result-card{display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-top:16px;animation:fadeIn 0.3s ease;}
+
+/* ===== SEARCH INPUT ===== */
+.search-in{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:9px;font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;outline:none;transition:border-color 0.2s;width:200px;}
+.search-in:focus{border-color:var(--accent);}
+.search-in::placeholder{color:var(--muted);}
+
+/* ===== MOBILE ===== */
+@media(max-width:768px){
+  :root{--sidebar:280px;}
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .ham-btn{display:block;}
+  .fr{grid-template-columns:1fr;}
+  .stats{grid-template-columns:1fr 1fr;}
+  .barcode-grid{grid-template-columns:1fr 1fr;}
+  .content{padding:14px;}
+  .tbl-wrap{overflow-x:auto;}
+  .ph{gap:8px;}
+  .ph-title{font-size:18px;}
+  .overlay{padding:8px;}
+  .modal{padding:18px;}
+  th,td{padding:9px 12px;}
+  .bar-lbl{width:80px;}
+}
+@media(max-width:420px){
+  .stats{grid-template-columns:1fr;}
+  .barcode-grid{grid-template-columns:1fr;}
+}
+
+/* ===== DASHBOARD ===== */
+.dash-greeting{margin-bottom:22px;}
+.dash-greeting h2{font-family:'Segoe UI',system-ui,sans-serif;font-weight:800;font-size:24px;font-weight:800;margin-bottom:4px;}
+.dash-greeting p{font-size:13px;color:var(--muted);}
+.dash-alert{margin-bottom:16px;}
+.alert-banner{background:rgba(241,107,107,0.1);border:1px solid rgba(241,107,107,0.3);border-radius:12px;padding:12px 16px;font-size:13px;color:var(--red);display:flex;align-items:center;gap:8px;font-weight:600;}
+.dash-section-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:12px;}
+.dash-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.dash-card{border-radius:16px;padding:22px 18px;cursor:pointer;transition:all 0.22s;position:relative;overflow:hidden;border:1px solid transparent;user-select:none;}
+.dash-card::after{content:'→';position:absolute;bottom:14px;right:16px;font-size:16px;opacity:0;transition:opacity 0.2s,right 0.2s;}
+.dash-card:hover::after{opacity:0.6;right:12px;}
+.dash-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,0.3);}
+.dash-card:active{transform:translateY(0);}
+.dash-card-icon{font-size:30px;margin-bottom:12px;display:block;}
+.dash-card-title{font-family:'Segoe UI',system-ui,sans-serif;font-weight:800;font-size:14px;font-weight:800;margin-bottom:4px;}
+.dash-card-sub{font-size:11px;opacity:0.7;}
+.dash-card.accent{background:linear-gradient(135deg,#f0b429,#e8960a);color:#1a1000;box-shadow:0 4px 18px rgba(240,180,41,0.3);}
+.dash-card.blue{background:linear-gradient(135deg,#2176d9,#1a5cb8);color:#fff;border-color:#1a5cb8;box-shadow:0 4px 18px rgba(33,118,217,0.25);}
+.dash-card.green{background:linear-gradient(135deg,#0ba07a,#088a69);color:#fff;border-color:#088a69;box-shadow:0 4px 18px rgba(11,160,122,0.25);}
+.dash-card.purple{background:linear-gradient(135deg,#7c5cdb,#6344c4);color:#fff;border-color:#6344c4;box-shadow:0 4px 18px rgba(124,92,219,0.25);}
+.dash-card.red{background:linear-gradient(135deg,#e03e3e,#c42f2f);color:#fff;border-color:#c42f2f;box-shadow:0 4px 18px rgba(224,62,62,0.25);}
+.dash-card.orange{background:linear-gradient(135deg,#f97316,#e05d0a);color:#fff;border-color:#e05d0a;box-shadow:0 4px 18px rgba(249,115,22,0.25);}
+.dash-card.teal{background:linear-gradient(135deg,#0d9488,#0a7a70);color:#fff;border-color:#0a7a70;box-shadow:0 4px 18px rgba(13,148,136,0.25);}
+.dash-card.gray{background:linear-gradient(135deg,#64748b,#4e5e72);color:#fff;border-color:#4e5e72;box-shadow:0 4px 18px rgba(100,116,139,0.2);}
+/* Low stock table compact */
+.low-stock-compact{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.lsc-row{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-top:1px solid var(--border);font-size:13px;}
+.lsc-row:first-child{border-top:none;}
+.lsc-row:hover{background:rgba(255,255,255,0.02);}
+@media(max-width:900px){.dash-actions{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:480px){.dash-actions{grid-template-columns:repeat(2,1fr);gap:10px;}.dash-card{padding:16px 14px;}.dash-card-icon{font-size:24px;margin-bottom:8px;}.dash-card-title{font-size:13px;}}
+
+
+/* ===== LOGIN SCREEN ===== */
+#loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,#e8edf8,#f4f6fb);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:36px 32px;width:100%;max-width:420px;text-align:center;animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 8px 40px rgba(0,0,0,0.12);}
+.login-logo{font-size:48px;margin-bottom:12px;}
+.login-title{font-family:'Segoe UI',system-ui,sans-serif;font-weight:800;font-size:26px;font-weight:800;color:var(--accent);margin-bottom:6px;}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:28px;}
+.login-stores{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.login-store-btn{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:14px;text-align:left;}
+.login-store-btn:hover{border-color:var(--accent);background:rgba(240,180,41,0.07);transform:translateX(4px);}
+.login-store-icon{font-size:28px;}
+.login-store-name{font-family:'Segoe UI',system-ui,sans-serif;font-weight:800;font-size:15px;font-weight:800;}
+.login-store-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+.login-store-arrow{margin-left:auto;font-size:18px;color:var(--muted);}
+.login-all-btn{background:transparent;border:1px dashed var(--border);border-radius:10px;padding:12px;width:100%;color:var(--muted);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;cursor:pointer;transition:all 0.2s;}
+.login-all-btn:hover{border-color:var(--muted);color:var(--text);}
+/* Scanner tabs */
+.scan-tabs{display:flex;background:var(--surface2);border-radius:12px;padding:4px;gap:4px;margin-bottom:20px;}
+.scan-tab{flex:1;padding:10px 6px;border-radius:9px;border:none;background:transparent;color:var(--muted);font-family:'Segoe UI',system-ui,sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;text-align:center;}
+.scan-tab:hover{color:var(--text);}
+.scan-tab.active{background:var(--accent);color:#0a0c10;}
+.scan-tab .st-icon{font-size:16px;display:block;margin-bottom:3px;}
+/* Active store badge in topbar */
+.store-badge{background:rgba(240,180,41,0.15);border:1px solid rgba(240,180,41,0.3);color:var(--accent);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.store-badge:hover{background:rgba(240,180,41,0.25);}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* ===== STORE CARDS ===== */
+.store-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;}
+.store-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:all 0.2s;}
+.store-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.store-card-head{display:flex;justify-content:space-between;align-items:start;margin-bottom:14px;}
+.store-card-name{font-family:'Segoe UI',system-ui,sans-serif;font-weight:800;font-size:15px;font-weight:800;}
+.store-card-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.store-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.store-metric{background:var(--surface2);padding:10px;border-radius:9px;}
+.store-metric-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:3px;}
+.store-metric-val{font-weight:700;font-size:13px;}
+
+/* ===== SCAN QUICK ACTIONS ===== */
+.quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.qa-btn{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 12px;text-align:center;cursor:pointer;transition:all 0.2s;}
+.qa-btn:hover{border-color:var(--accent);background:rgba(240,180,41,0.05);transform:translateY(-2px);}
+.qa-btn .qa-icon{font-size:26px;margin-bottom:8px;}
+.qa-btn .qa-label{font-size:12px;font-weight:600;color:var(--muted);}
+.qa-btn:hover .qa-label{color:var(--accent);}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:12px 18px;border-radius:12px;font-size:13px;font-weight:500;z-index:9999;animation:slideUp 0.3s ease;box-shadow:0 8px 32px rgba(0,0,0,0.4);max-width:300px;}
+.toast.success{border-color:var(--green);color:var(--green);}
+.toast.error{border-color:var(--red);color:var(--red);}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="logo">
+    <h1>👔 Dammy</h1>
+    <small>Erkek Giyim · Mağaza Takip</small>
+  </div>
+
+  <div class="store-sel">
+    <label>Aktif Mağaza</label>
+    <select id="storeSelect" onchange="switchStore(this.value)">
+      <option value="all">📊 Tüm Mağazalar</option>
+    </select>
+  </div>
+
+  <div class="nav-sec">Genel</div>
+  <div class="nav-item active" onclick="nav('dashboard',this)"><span class="ni">📊</span>Gösterge Paneli</div>
+  <div class="nav-item" onclick="nav('stores',this)"><span class="ni">🏪</span>Mağazalar</div>
+
+  <div class="nav-sec">Barkod</div>
+  <div class="nav-item" onclick="nav('scanner',this)"><span class="ni">📷</span>Barkod Okuyucu</div>
+  <div class="nav-item" onclick="nav('barcodes',this)"><span class="ni">🔖</span>Barkodlar</div>
+
+  <div class="nav-sec">Yönetim</div>
+  <div class="nav-item" onclick="nav('products',this)"><span class="ni">📦</span>Ürünler & Stok</div>
+  <div class="nav-item" onclick="nav('sales',this)"><span class="ni">💰</span>Satışlar</div>
+  <div class="nav-item" onclick="nav('expenses',this)"><span class="ni">💸</span>Giderler</div>
+  <div class="nav-item" onclick="nav('reports',this)"><span class="ni">📈</span>Raporlar</div>
+  <div class="nav-item" id="nav-personnel" onclick="nav('personnel',this)"><span class="ni">👥</span>Personel</div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <button class="ham-btn" onclick="toggleSidebar()">☰</button>
+    <div class="topbar-title" style="display:flex;align-items:center;gap:10px;"><span style="color:var(--muted);font-size:12px">Mağaza:</span><span class="store-badge" id="activeStoreName" onclick="showLoginScreen()" title="Mağaza değiştir">Tüm Mağazalar</span></div>
+    <div class="topbar-right">
+      <div id="topbarUserInfo" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"></div>
+      <button class="btn btn-sm btn-blue" onclick="nav('scanner',null)">📷 Barkod Tara</button>
+      <span style="font-size:11px;color:var(--muted)" id="dateDisp"></span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="section active" id="s-dashboard">
+      <!-- Greeting -->
+      <div id="dash-greeting"></div>
+
+      <!-- Low stock alert banner -->
+      <div id="dash-alert"></div>
+
+      <!-- Quick Action Buttons -->
+      <div class="dash-section-label">Hızlı İşlemler</div>
+      <div class="dash-actions">
+        <div class="dash-card accent" onclick="openM('addSale')">
+          <div class="dash-card-icon">💰</div>
+          <div class="dash-card-title">Satış Ekle</div>
+          <div class="dash-card-sub">Manuel satış kaydı</div>
+        </div>
+        <div class="dash-card blue" onclick="nav('scanner', document.querySelector('[onclick*=scanner]'))">
+          <div class="dash-card-icon">📷</div>
+          <div class="dash-card-title">Barkod Tara</div>
+          <div class="dash-card-sub">Kamera ile oku</div>
+        </div>
+        <div class="dash-card green" onclick="nav('products', document.querySelector('[onclick*=products]'))">
+          <div class="dash-card-icon">📦</div>
+          <div class="dash-card-title">Stok Yönetimi</div>
+          <div class="dash-card-sub">Ürün & stok takibi</div>
+        </div>
+        <div class="dash-card purple" onclick="openM('addProduct')">
+          <div class="dash-card-icon">➕</div>
+          <div class="dash-card-title">Ürün Ekle</div>
+          <div class="dash-card-sub">Yeni ürün tanımla</div>
+        </div>
+        <div class="dash-card red" onclick="openM('addExpense')">
+          <div class="dash-card-icon">💸</div>
+          <div class="dash-card-title">Gider Ekle</div>
+          <div class="dash-card-sub">Harcama kaydet</div>
+        </div>
+        <div class="dash-card orange" onclick="nav('barcodes', document.querySelector('[onclick*=barcodes]'))">
+          <div class="dash-card-icon">🔖</div>
+          <div class="dash-card-title">Barkodlar</div>
+          <div class="dash-card-sub">Yazdır & yönet</div>
+        </div>
+        <div class="dash-card teal" onclick="nav('stores', document.querySelector('[onclick*=stores]'))">
+          <div class="dash-card-icon">🏪</div>
+          <div class="dash-card-title">Mağazalar</div>
+          <div class="dash-card-sub">Şube yönetimi</div>
+        </div>
+        <div class="dash-card gray" onclick="nav('reports', document.querySelector('[onclick*=reports]'))">
+          <div class="dash-card-icon">📈</div>
+          <div class="dash-card-title">Raporlar</div>
+          <div class="dash-card-sub">Kâr & analiz</div>
+        </div>
+      </div>
+
+      <!-- Low stock mini list -->
+      <div class="dash-section-label" style="margin-top:28px">⚠️ Düşük Stok Uyarıları</div>
+      <div id="lowStockDiv"></div>
+    </div>
+
+    <!-- STORES -->
+    <div class="section" id="s-stores">
+      <div class="ph">
+        <div class="ph-title">Mağaza <span>Yönetimi</span></div>
+        <button class="btn" onclick="openM('addStore')">+ Mağaza Ekle</button>
+      </div>
+      <div class="store-cards" id="storeCards"></div>
+    </div>
+
+    <!-- SCANNER -->
+    <div class="section" id="s-scanner">
+      <div class="ph">
+        <div class="ph-title">Barkod <span>Okuyucu</span></div>
+      </div>
+
+      <!-- 3 Sekme -->
+      <div class="scan-tabs">
+        <button class="scan-tab active" id="stab-sale" onclick="switchScanTab('sale')">
+          <span class="st-icon">💰</span>Satış
+        </button>
+        <button class="scan-tab" id="stab-stockin" onclick="switchScanTab('stockin')">
+          <span class="st-icon">📥</span>Stok Giriş
+        </button>
+        <button class="scan-tab" id="stab-stockview" onclick="switchScanTab('stockview')">
+          <span class="st-icon">📦</span>Stok Takip
+        </button>
+      </div>
+
+      <!-- Tab içerikleri -->
+      <!-- SATIŞ -->
+      <div id="stab-content-sale">
+        <div class="card" style="padding:20px;margin-bottom:14px">
+          <div style="font-family:system-ui,sans-serif;font-weight:800;font-size:14px;font-weight:800;margin-bottom:4px">💰 Satış Modu</div>
+          <div style="font-size:12px;color:var(--muted)">Barkodu okutunca satış ekranı açılır, stok otomatik düşer</div>
+        </div>
+        <div class="card" style="padding:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+            <div style="font-family:system-ui,sans-serif;font-weight:800;font-size:14px;font-weight:800">📷 Kamera</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-green" id="startScanBtn-sale" onclick="startScannerTab('sale')">▶ Aç</button>
+              <button class="btn-outline btn-sm" id="stopScanBtn-sale" onclick="stopScannerTab('sale')" style="display:none">⏹ Durdur</button>
+            </div>
+          </div>
+          <video id="sv-sale" autoplay playsinline muted style="display:none;width:100%;border-radius:12px;border:2px solid var(--accent);background:#1a1a2e;max-height:280px;object-fit:cover;"></video>
+          <canvas id="sc-sale" style="display:none;"></canvas>
+          <div id="sp-sale" style="background:var(--surface2);border:2px dashed var(--border);border-radius:12px;padding:36px 16px;text-align:center;color:var(--muted);">
+            <div style="font-size:36px;margin-bottom:8px">📷</div>
+            <div style="font-size:13px">Kamerayı aç ve barkodu tut</div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <input class="search-in" style="flex:1" id="mb-sale" type="text" placeholder="Manuel barkod..." onkeydown="if(event.key==='Enter')manualTab('sale')">
+            <button class="btn btn-sm" onclick="manualTab('sale')">Ara</button>
+          </div>
+        </div>
+        <div id="res-sale" style="margin-top:14px"></div>
+      </div>
+
+      <!-- STOK GİRİŞ -->
+      <div id="stab-content-stockin" style="display:none">
+        <div class="card" style="padding:20px;margin-bottom:14px">
+          <div style="font-family:system-ui,sans-serif;font-weight:800;font-size:14px;font-weight:800;margin-bottom:4px">📥 Stok Giriş Modu</div>
+          <div style="font-size:12px;color:var(--muted)">Barkodu okutunca stok ekleme ekranı açılır</div>
+        </div>
+        <div class="card" style="padding:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+            <div style="font-family:system-ui,sans-serif;font-weight:800;font-size:14px;font-weight:800">📷 Kamera</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-green" id="startScanBtn-stockin" onclick="startScannerTab('stockin')">▶ Aç</button>
+              <button class="btn-outline btn-sm" id="stopScanBtn-stockin" onclick="stopScannerTab('stockin')" style="display:none">⏹ Durdur</button>
+            </div>
+          </div>
+          <video id="sv-stockin" autoplay playsinline muted style="display:none;width:100%;border-radius:12px;border:2px solid var(--blue);background:#1a1a2e;max-height:280px;object-fit:cover;"></video>
+          <canvas id="sc-stockin" style="display:none;"></canvas>
+          <div id="sp-stockin" style="background:var(--surface2);border:2px dashed var(--border);border-radius:12px;padding:36px 16px;text-align:center;color:var(--muted);">
+            <div style="font-size:36px;margin-bottom:8px">📷</div>
+            <div style="font-size:13px">Kamerayı aç ve barkodu tut</div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <input class="search-in" style="flex:1" id="mb-stockin" type="text" placeholder="Manuel barkod..." onkeydown="if(event.key==='Enter')manualTab('stockin')">
+            <button class="btn btn-sm" onclick="manualTab('stockin')">Ara</button>
+          </div>
+        </div>
+        <div id="res-stockin" style="margin-top:14px"></div>
+      </div>
+
+      <!-- STOK TAKİP -->
+      <div id="stab-content-stockview" style="display:none">
+        <div class="card" style="padding:20px;margin-bottom:14px">
+          <div style="font-family:system-ui,sans-serif;font-weight:800;font-size:14px;font-weight:800;margin-bottom:4px">📦 Stok Takip Modu</div>
+          <div style="font-size:12px;color:var(--muted)">Barkodu okutunca ürün fiyatı ve stok durumu gösterilir</div>
+        </div>
+        <div class="card" style="padding:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+            <div style="font-family:system-ui,sans-serif;font-weight:800;font-size:14px;font-weight:800">📷 Kamera</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-green" id="startScanBtn-stockview" onclick="startScannerTab('stockview')">▶ Aç</button>
+              <button class="btn-outline btn-sm" id="stopScanBtn-stockview" onclick="stopScannerTab('stockview')" style="display:none">⏹ Durdur</button>
+            </div>
+          </div>
+          <video id="sv-stockview" autoplay playsinline muted style="display:none;width:100%;border-radius:12px;border:2px solid var(--green);background:#1a1a2e;max-height:280px;object-fit:cover;"></video>
+          <canvas id="sc-stockview" style="display:none;"></canvas>
+          <div id="sp-stockview" style="background:var(--surface2);border:2px dashed var(--border);border-radius:12px;padding:36px 16px;text-align:center;color:var(--muted);">
+            <div style="font-size:36px;margin-bottom:8px">📷</div>
+            <div style="font-size:13px">Kamerayı aç ve barkodu tut</div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <input class="search-in" style="flex:1" id="mb-stockview" type="text" placeholder="Manuel barkod..." onkeydown="if(event.key==='Enter')manualTab('stockview')">
+            <button class="btn btn-sm" onclick="manualTab('stockview')">Ara</button>
+          </div>
+        </div>
+        <div id="res-stockview" style="margin-top:14px"></div>
+      </div>
+
+    </div>
+
+    <!-- BARCODES -->
+    <div class="section" id="s-barcodes">
+      <div class="ph">
+        <div class="ph-title">Barkod <span>Yönetimi</span></div>
+        <div class="ph-actions">
+          <button class="btn-outline" onclick="generateAllBarcodes()">🔖 Hepsini Oluştur</button>
+          <button class="btn" onclick="printAllBarcodes()">🖨️ Yazdır</button>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <input class="search-in" style="width:100%;max-width:320px" type="text" placeholder="Ürün ara..." oninput="renderBarcodes(this.value)">
+      </div>
+      <div class="barcode-grid" id="barcodeGrid"></div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div class="section" id="s-products">
+      <div class="ph">
+        <div class="ph-title">Ürünler & <span>Stok</span></div>
+        <div class="ph-actions">
+          <select class="search-in" id="prodStoreF" onchange="renderProducts()" style="width:160px">
+            <option value="all">Tüm Mağazalar</option>
+          </select>
+          <button class="btn" onclick="openM('addProduct')">+ Ürün Ekle</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3>📦 Ürün Listesi</h3>
+          <input class="search-in" type="text" placeholder="🔍 Ürün ara..." oninput="renderProducts()" id="prodSearch">
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Barkod</th><th>Ürün Adı</th><th>Kategori</th><th>Fiyat</th><th>Stok</th><th>Mağaza</th><th>Durum</th><th>İşlem</th></tr></thead>
+            <tbody id="prodTbl"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SALES -->
+    <div class="section" id="s-sales">
+      <div class="ph">
+        <div class="ph-title">Satış <span>Kayıtları</span></div>
+        <div class="ph-actions">
+          <select class="search-in" id="saleStoreF" onchange="renderSales()" style="width:160px">
+            <option value="all">Tüm Mağazalar</option>
+          </select>
+          <button class="btn" onclick="openM('addSale')">+ Satış Ekle</button>
+        </div>
+      </div>
+      <div class="stats" id="saleStats" style="grid-template-columns:repeat(3,1fr)"></div>
+      <div class="card">
+        <div class="card-head"><h3>💰 Satış Listesi</h3></div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Tarih</th><th>Ürün</th><th>Barkod</th><th>Adet</th><th>Fiyat</th><th>Toplam</th><th>Mağaza</th><th>İşlem</th></tr></thead>
+            <tbody id="saleTbl"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPENSES -->
+    <div class="section" id="s-expenses">
+      <div class="ph">
+        <div class="ph-title">Gider <span>Takibi</span></div>
+        <div class="ph-actions">
+          <select class="search-in" id="expStoreF" onchange="renderExpenses()" style="width:160px">
+            <option value="all">Tüm Mağazalar</option>
+          </select>
+          <button class="btn" onclick="openM('addExpense')">+ Gider Ekle</button>
+        </div>
+      </div>
+      <div class="stats" id="expStats" style="grid-template-columns:repeat(3,1fr)"></div>
+      <div class="card">
+        <div class="card-head"><h3>💸 Gider Listesi</h3></div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Tarih</th><th>Açıklama</th><th>Kategori</th><th>Tutar</th><th>Mağaza</th><th>İşlem</th></tr></thead>
+            <tbody id="expTbl"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="section" id="s-reports">
+      <div class="ph"><div class="ph-title">Finansal <span>Raporlar</span></div></div>
+      <div class="stats" id="repStats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
+        <div class="card"><div class="card-head"><h3>💰 Mağaza Gelirleri</h3></div><div class="bar-chart" id="revChart"></div></div>
+        <div class="card"><div class="card-head"><h3>💸 Kategori Giderleri</h3></div><div class="bar-chart" id="expChart"></div></div>
+      </div>
+      <div class="card" style="margin-top:16px"><div class="card-head"><h3>🏆 En Çok Satanlar</h3></div><div class="bar-chart" id="topPChart"></div></div>
+    </div>
+
+    <!-- PERSONNEL -->
+    <div class="section" id="s-personnel">
+      <div class="ph">
+        <div class="ph-title">Personel <span>Yönetimi</span></div>
+        <button class="btn" onclick="openM('addStaff')">+ Personel Ekle</button>
+      </div>
+      <!-- Monthly summary -->
+      <div id="staffMonthlyStats" style="margin-bottom:20px"></div>
+      <!-- Staff list -->
+      <div class="card">
+        <div class="card-head">
+          <h3>👥 Personel Listesi</h3>
+          <select class="search-in" id="staffMonthFilter" style="width:160px" onchange="renderPersonnel()">
+            <option value="">Bu Ay</option>
+          </select>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Ad Soyad</th><th>Kullanıcı Adı</th><th>Bu Ay Satış</th><th>Bu Ay Ciro</th><th>Toplam Ciro</th><th>Stok Girişi</th><th>İşlem</th></tr></thead>
+            <tbody id="staffTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Staff sales detail -->
+      <div class="card" id="staffDetailCard" style="display:none">
+        <div class="card-head"><h3 id="staffDetailTitle">Personel Detayı</h3><button class="btn-outline" onclick="document.getElementById('staffDetailCard').style.display='none'">Kapat</button></div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Tarih</th><th>Ürün</th><th>Adet</th><th>Toplam</th></tr></thead>
+            <tbody id="staffDetailTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ===== MODALS ===== -->
+
+<!-- Add Store -->
+<div class="overlay" id="m-addStore">
+  <div class="modal">
+    <h2>🏪 Mağaza Ekle</h2>
+    <div class="fg"><label>Mağaza Adı</label><input id="i-sName" type="text" placeholder="Merkez Mağaza"></div>
+    <div class="fr">
+      <div class="fg"><label>Şehir</label><input id="i-sCity" type="text" placeholder="İstanbul"></div>
+      <div class="fg"><label>Yetkili</label><input id="i-sMgr" type="text" placeholder="Ad Soyad"></div>
+    </div>
+    <div class="ma"><button class="btn-outline" onclick="closeM()">İptal</button><button class="btn" onclick="addStore()">Ekle</button></div>
+  </div>
+</div>
+
+<!-- Add Product -->
+<div class="overlay" id="m-addProduct">
+  <div class="modal">
+    <h2>📦 Ürün Ekle</h2>
+    <div class="fg"><label>Ürün Adı</label><input id="i-pName" type="text" placeholder="Ürün adı"></div>
+    <div class="fr">
+      <div class="fg"><label>Kategori</label><input id="i-pCat" type="text" placeholder="Elektronik"></div>
+      <div class="fg"><label>Mağaza</label><select id="i-pStore"></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Satış Fiyatı (₺)</label><input id="i-pPrice" type="number" placeholder="0"></div>
+      <div class="fg"><label>Stok</label><input id="i-pStock" type="number" placeholder="0"></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Min. Stok Uyarısı</label><input id="i-pMinStock" type="number" value="5"></div>
+      <div class="fg">
+        <label>Barkod</label>
+        <div style="display:flex;gap:6px">
+          <input id="i-pBarcode" type="text" placeholder="Otomatik" style="flex:1">
+          <button class="btn btn-sm btn-blue" onclick="genBarcode()" type="button">Üret</button>
+        </div>
+      </div>
+    </div>
+    <div class="ma"><button class="btn-outline" onclick="closeM()">İptal</button><button class="btn" onclick="addProduct()">Ekle</button></div>
+  </div>
+</div>
+
+<!-- Add Sale -->
+<div class="overlay" id="m-addSale">
+  <div class="modal">
+    <h2>💰 Satış Ekle</h2>
+    <div class="fr">
+      <div class="fg"><label>Mağaza</label><select id="i-salStore" onchange="updateSaleProd()"></select></div>
+      <div class="fg"><label>Ürün</label><select id="i-salProd" onchange="fillSalePrice()"></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Adet</label><input id="i-salQty" type="number" value="1" min="1"></div>
+      <div class="fg"><label>Birim Fiyat (₺)</label><input id="i-salPrice" type="number" placeholder="0"></div>
+    </div>
+    <div class="fg"><label>Tarih</label><input id="i-salDate" type="date"></div>
+    <div class="ma"><button class="btn-outline" onclick="closeM()">İptal</button><button class="btn" onclick="addSale()">Ekle</button></div>
+  </div>
+</div>
+
+<!-- Quick Sale from Scan -->
+<div class="overlay" id="m-quickSale">
+  <div class="modal">
+    <h2>💰 Hızlı Satış</h2>
+    <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:16px">
+      <div style="font-weight:700;font-size:15px" id="qs-name">-</div>
+      <div style="font-size:12px;color:var(--muted)" id="qs-info">-</div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Adet</label><input id="qs-qty" type="number" value="1" min="1"></div>
+      <div class="fg"><label>Fiyat (₺)</label><input id="qs-price" type="number"></div>
+    </div>
+    <input type="hidden" id="qs-pid">
+    <div class="ma"><button class="btn-outline" onclick="closeM()">İptal</button><button class="btn btn-green" onclick="doQuickSale()">✅ Satışı Kaydet</button></div>
+  </div>
+</div>
+
+<!-- Add Expense -->
+<div class="overlay" id="m-addExpense">
+  <div class="modal">
+    <h2>💸 Gider Ekle</h2>
+    <div class="fg"><label>Açıklama</label><input id="i-eDesc" type="text" placeholder="Gider açıklaması"></div>
+    <div class="fr">
+      <div class="fg"><label>Kategori</label>
+        <select id="i-eCat"><option>Kira</option><option>Personel</option><option>Fatura</option><option>Malzeme</option><option>Lojistik</option><option>Pazarlama</option><option>Diğer</option></select>
+      </div>
+      <div class="fg"><label>Mağaza</label><select id="i-eStore"></select></div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Tutar (₺)</label><input id="i-eAmt" type="number" placeholder="0"></div>
+      <div class="fg"><label>Tarih</label><input id="i-eDate" type="date"></div>
+    </div>
+    <div class="ma"><button class="btn-outline" onclick="closeM()">İptal</button><button class="btn" onclick="addExpense()">Ekle</button></div>
+  </div>
+</div>
+
+<!-- Edit Stock -->
+<div class="overlay" id="m-editStock">
+  <div class="modal">
+    <h2>📦 Stok Güncelle</h2>
+    <div style="font-weight:600;margin-bottom:14px" id="es-name">-</div>
+    <input type="hidden" id="es-id">
+    <div class="fg"><label>Yeni Stok Adedi</label><input id="es-qty" type="number" min="0"></div>
+    <div class="ma"><button class="btn-outline" onclick="closeM()">İptal</button><button class="btn" onclick="doEditStock()">Güncelle</button></div>
+  </div>
+</div>
+
+<!-- Print Barcode -->
+<div class="overlay" id="m-printBarcode">
+  <div class="modal" style="max-width:420px">
+    <h2>🖨️ Barkod Yazdır</h2>
+    <div id="print-barcode-content" style="background:#fff;border-radius:10px;padding:16px;text-align:center;margin-bottom:16px"></div>
+    <div class="ma">
+      <button class="btn-outline" onclick="closeM()">Kapat</button>
+      <button class="btn" onclick="doPrintBarcode()">🖨️ Yazdır</button>
+      <button class="btn btn-blue" onclick="downloadBarcode()">⬇️ İndir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Staff Modal -->
+<div class="overlay" id="m-addStaff">
+  <div class="modal">
+    <h2>👤 Personel Ekle</h2>
+    <div class="fr">
+      <div class="fg"><label>Ad Soyad</label><input id="i-stName" type="text" placeholder="Ahmet Yılmaz"></div>
+      <div class="fg"><label>Kullanıcı Adı</label><input id="i-stUser" type="text" placeholder="ahmet"></div>
+    </div>
+    <div class="fg"><label>Şifre</label><input id="i-stPass" type="password" placeholder="Şifre belirle"></div>
+    <div class="fg">
+      <label>Stok Girişi Yetkisi</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+        <input type="checkbox" id="i-stStock" style="width:18px;height:18px;accent-color:var(--accent)">
+        <label for="i-stStock" style="font-size:13px;color:var(--text);text-transform:none;letter-spacing:0">Stok girişi yapabilsin</label>
+      </div>
+    </div>
+    <div class="ma"><button class="btn-outline" onclick="closeM()">İptal</button><button class="btn" onclick="addStaff()">Ekle</button></div>
+  </div>
+</div>
+
+<!-- Edit Staff Modal -->
+<div class="overlay" id="m-editStaff">
+  <div class="modal">
+    <h2>✏️ Personel Düzenle</h2>
+    <input type="hidden" id="i-editStId">
+    <div class="fr">
+      <div class="fg"><label>Ad Soyad</label><input id="i-editStName" type="text"></div>
+      <div class="fg"><label>Yeni Şifre</label><input id="i-editStPass" type="password" placeholder="Boş bırakırsan değişmez"></div>
+    </div>
+    <div class="fg">
+      <label>Stok Girişi Yetkisi</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px">
+        <input type="checkbox" id="i-editStStock" style="width:18px;height:18px;accent-color:var(--accent)">
+        <label for="i-editStStock" style="font-size:13px;color:var(--text);text-transform:none;letter-spacing:0">Stok girişi yapabilsin</label>
+      </div>
+    </div>
+    <div class="ma"><button class="btn-outline" onclick="closeM()">İptal</button><button class="btn" onclick="saveStaff()">Kaydet</button></div>
+  </div>
+</div>
+
+<!-- Sidebar overlay for mobile -->
+<div id="sideOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:199" onclick="toggleSidebar()"></div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+// Temiz veri şablonu
+const DEFAULT_DATA = {
+  stores: [{ id: 1, name: 'Dammy', city: '', manager: '' }],
+  products: [
+    { id: 1, name: 'Slim Fit Takım Elbise', category: 'Takım Elbise', price: 0, stock: 0, minStock: 3, storeId: 1, barcode: '8680000000001' },
+    { id: 2, name: 'Klasik Gömlek', category: 'Gömlek', price: 0, stock: 0, minStock: 5, storeId: 1, barcode: '8680000000002' },
+    { id: 3, name: 'Chino Pantolon', category: 'Pantolon', price: 0, stock: 0, minStock: 5, storeId: 1, barcode: '8680000000003' },
+    { id: 4, name: 'Deri Ceket', category: 'Ceket', price: 0, stock: 0, minStock: 2, storeId: 1, barcode: '8680000000004' },
+    { id: 5, name: 'Kazak', category: 'Üst Giyim', price: 0, stock: 0, minStock: 5, storeId: 1, barcode: '8680000000005' },
+    { id: 6, name: 'Spor Ayakkabı', category: 'Ayakkabı', price: 0, stock: 0, minStock: 3, storeId: 1, barcode: '8680000000006' },
+  ],
+  sales: [],
+  expenses: [],
+  users: [{ id: 1, username: 'yonetici', password: 'dammy2024', name: 'Yönetici', role: 'manager', storeId: 1, canStockEntry: true }],
+  nextId: 100
+};
+
+let rawData = JSON.parse(localStorage.getItem('dammy_data') || 'null');
+// Eski anahtar varsa temizle
+if (!rawData) { localStorage.removeItem('mt_pro_data'); }
+let D = rawData || JSON.parse(JSON.stringify(DEFAULT_DATA));
+// Eksik alanları tamamla
+if (!D.users) D.users = DEFAULT_DATA.users;
+if (!D.sales) D.sales = [];
+if (!D.expenses) D.expenses = [];
+
+// ── AUTH STATE ─────────────────────────────────────────────────────────────
+let currentUser = null; // { id, username, name, role, storeId, canStockEntry }
+let authRole = null; // 'manager' | 'staff'
+
+function isManager() { return currentUser?.role === 'manager'; }
+function canDoStockEntry() { return isManager() || currentUser?.canStockEntry; }
+
+let activeStore = 'all';
+let scanMode = 'info';
+
+let scannerRunning = false;
+let printBarcodeData = null;
+
+// ============================================================
+// UTILS
+// ============================================================
+function save() { localStorage.setItem('dammy_data', JSON.stringify(D)); }
+function fmt(n) { return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2 }).format(n || 0) + ' ₺'; }
+function fmtD(d) { if (!d) return '-'; return new Date(d + 'T00:00:00').toLocaleDateString('tr-TR'); }
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function toast(msg, type = 'success') {
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function genEAN13() {
+  // Generate a valid EAN-13 barcode
+  const base = '868' + String(Math.floor(Math.random() * 1e9)).padStart(9, '0');
+  let sum = 0;
+  for (let i = 0; i < 12; i++) sum += parseInt(base[i]) * (i % 2 === 0 ? 1 : 3);
+  const check = (10 - (sum % 10)) % 10;
+  return base + check;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = () => {
+  document.getElementById('dateDisp').textContent = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+  document.getElementById('i-salDate').value = today();
+  document.getElementById('i-eDate').value = today();
+  if (!D.users) D.users = [{ id: 1, username: 'yonetici', password: 'dammy2024', name: 'Yönetici', role: 'manager', storeId: 1, canStockEntry: true }];
+  updateSelectors();
+  renderAll();
+  document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', function (e) { if (e.target === this) closeM(); }));
+  showLoginScreen();
+};
+
+function showLoginScreen() {
+  document.getElementById('authScreen').style.display = 'flex';
+  document.getElementById('authRoleStep').style.display = '';
+  document.getElementById('authFormStep').style.display = 'none';
+  document.getElementById('authError').style.display = 'none';
+  document.getElementById('authUser').value = '';
+  document.getElementById('authPass').value = '';
+}
+
+function selectRole(role) {
+  authRole = role;
+  document.getElementById('authRoleStep').style.display = 'none';
+  document.getElementById('authFormStep').style.display = '';
+  const titles = { manager: '👑 Yönetici Girişi', staff: '👤 Personel Girişi' };
+  document.getElementById('authFormTitle').textContent = titles[role];
+  document.getElementById('authUserRow').style.display = '';
+  document.getElementById('authUser').value = '';
+  document.getElementById('authPass').value = '';
+  setTimeout(() => {
+    if (role === 'staff') document.getElementById('authUser').focus();
+    else document.getElementById('authPass').focus();
+  }, 100);
+}
+
+function doLogin() {
+  const username = document.getElementById('authUser').value.trim().toLowerCase();
+  const password = document.getElementById('authPass').value;
+  const errEl = document.getElementById('authError');
+
+  if (!password) { showAuthError('Şifre giriniz'); return; }
+
+  if (authRole === 'manager') {
+    if (!username) { showAuthError('Kullanıcı adı giriniz'); return; }
+    const mgr = D.users.find(u => u.role === 'manager' && u.username === username && u.password === password);
+    if (!mgr) { showAuthError('Kullanıcı adı veya şifre hatalı!'); return; }
+    currentUser = mgr;
+  } else {
+    if (!username) { showAuthError('Kullanıcı adı giriniz'); return; }
+    const user = D.users.find(u => u.role === 'staff' && u.username === username && u.password === password);
+    if (!user) { showAuthError('Kullanıcı adı veya şifre hatalı!'); return; }
+    currentUser = user;
+  }
+
+  errEl.style.display = 'none';
+  document.getElementById('authScreen').style.display = 'none';
+  applyRoleUI();
+  switchStore(currentUser.storeId || 1);
+  toast('Hoş geldin, ' + currentUser.name + '! 👋');
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('authError');
+  el.textContent = '⚠️ ' + msg;
+  el.style.display = 'block';
+  el.style.animation = 'none';
+  setTimeout(() => el.style.animation = '', 10);
+}
+
+function applyRoleUI() {
+  const manager = isManager();
+  // Sidebar items — hide manager-only items for staff
+  const managerOnlyNavs = ['s-expenses', 's-reports', 's-stores'];
+  managerOnlyNavs.forEach(id => {
+    const nav = document.querySelector(`[onclick*="${id.replace('s-','')}"]`);
+    if (nav) nav.style.display = manager ? '' : 'none';
+  });
+  // Stock entry tab in scanner
+  const stockinTab = document.getElementById('stab-stockin');
+  if (stockinTab) stockinTab.style.display = (manager || canDoStockEntry()) ? '' : 'none';
+  // Hide profit/margin info from staff
+  if (!manager) {
+    document.querySelectorAll('.profit-hidden').forEach(el => el.style.display = 'none');
+  }
+  // Show/hide topbar logout
+  updateTopbarUser();
+  // Update dashboard greeting
+  renderDashboard();
+}
+
+function updateTopbarUser() {
+  const el = document.getElementById('topbarUserInfo');
+  if (!el || !currentUser) return;
+  el.innerHTML = `
+    <span style="font-size:11px;color:var(--muted)">${currentUser.name}</span>
+    <span style="background:${isManager() ? 'rgba(230,146,10,0.15)' : 'rgba(33,118,217,0.15)'};color:${isManager() ? 'var(--accent)' : 'var(--blue)'};padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">${isManager() ? '👑 YÖNETİCİ' : '👤 PERSONEL'}</span>
+    <button onclick="logout()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:7px;font-size:11px;cursor:pointer;font-family:'Segoe UI',system-ui,sans-serif;">Çıkış</button>
+  `;
+}
+
+function logout() {
+  if (!confirm('Çıkış yapmak istiyor musunuz?')) return;
+  currentUser = null;
+  authRole = null;
+  // Re-show all nav items
+  document.querySelectorAll('.nav-item').forEach(n => n.style.display = '');
+  showLoginScreen();
+}
+
+function loginStore(storeId) {
+  document.getElementById('authScreen').style.display = 'none';
+  switchStore(storeId);
+}
+
+function renderAll() {
+  renderDashboard(); renderStores(); renderProducts(); renderSales(); renderExpenses(); renderReports(); renderBarcodes('');
+  if (isManager()) renderPersonnel();
+}
+
+function updateSelectors() {
+  ['storeSelect', 'i-pStore', 'i-salStore', 'i-eStore', 'prodStoreF', 'saleStoreF', 'expStoreF'].forEach(sid => {
+    const el = document.getElementById(sid); if (!el) return;
+    const hasAll = ['storeSelect', 'prodStoreF', 'saleStoreF', 'expStoreF'].includes(sid);
+    const prev = el.value;
+    el.innerHTML = '';
+    if (hasAll) el.innerHTML = '<option value="all">Tüm Mağazalar</option>';
+    D.stores.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.id; o.textContent = s.name; el.appendChild(o);
+    });
+    if (prev) el.value = prev;
+  });
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+let currentSection = 'dashboard';
+function nav(id, el) {
+  if (currentSection === 'scanner' && id !== 'scanner') stopScanner();
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  currentSection = id;
+  // close sidebar on mobile
+  if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sideOverlay').style.display = 'none'; }
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'reports') renderReports();
+  if (id === 'barcodes') renderBarcodes('');
+  if (id === 'personnel') renderPersonnel();
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sideOverlay');
+  sb.classList.toggle('open');
+  ov.style.display = sb.classList.contains('open') ? 'block' : 'none';
+}
+
+function switchStore(val) {
+  activeStore = val;
+  document.getElementById('activeStoreName').textContent = val === 'all' ? 'Tüm Mağazalar' : (D.stores.find(s => s.id == val)?.name || '');
+  renderDashboard(); renderProducts(); renderSales(); renderExpenses(); renderReports();
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const fp = activeStore === 'all' ? D.products : D.products.filter(p => p.storeId == activeStore);
+  const low = fp.filter(p => p.stock <= p.minStock);
+  const storeName = activeStore === 'all' ? 'Tüm Mağazalar' : (D.stores.find(s => s.id == activeStore)?.name || '');
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Günaydın' : hour < 18 ? 'İyi günler' : 'İyi akşamlar';
+  const userName = currentUser ? currentUser.name : '';
+
+  // Greeting
+  document.getElementById('dash-greeting').innerHTML = `
+    <div class="dash-greeting">
+      <h2>${greet}${userName ? ', ' + userName : ''}! 👋</h2>
+      <p>${storeName} · ${new Date().toLocaleDateString('tr-TR', {weekday:'long',day:'numeric',month:'long'})}</p>
+      ${!isManager() && currentUser ? `<div style="margin-top:8px">
+        <span style="background:rgba(33,118,217,0.12);color:var(--blue);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">
+          Bu ayki ciron: ${fmt(D.sales.filter(s=>s.userId===currentUser.id&&s.date?.startsWith(new Date().toISOString().slice(0,7))).reduce((a,s)=>a+s.qty*s.price,0))}
+        </span>
+      </div>` : ''}
+    </div>`;
+
+  // Alert banner — only show to manager
+  const alertEl = document.getElementById('dash-alert');
+  if (low.length > 0 && isManager()) {
+    alertEl.innerHTML = `<div class="alert-banner">⚠️ ${low.length} üründe stok kritik seviyede! <span style="margin-left:auto;cursor:pointer;text-decoration:underline" onclick="nav('products',document.querySelector('[onclick*=products]'))">Görüntüle →</span></div>`;
+  } else {
+    alertEl.innerHTML = '';
+  }
+
+  // Hide manager-only dashboard cards for staff
+  const allCards = document.querySelectorAll('.dash-card.red, .dash-card.gray');
+  allCards.forEach(c => c.style.display = isManager() ? '' : 'none');
+
+  // Low stock section — only manager
+  const lsSection = document.getElementById('lowStockDiv');
+  const lsLabel = document.querySelector('[style*="margin-top:28px"]');
+  if (!isManager()) {
+    if (lsSection) lsSection.style.display = 'none';
+    if (lsLabel) lsLabel.style.display = 'none';
+    return;
+  }
+  if (lsSection) lsSection.style.display = '';
+  if (lsLabel) lsLabel.style.display = '';
+
+  if (!low.length) {
+    lsSection.innerHTML = `<div class="low-stock-compact"><div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">✅ Tüm stoklar yeterli seviyede</div></div>`;
+  } else {
+    lsSection.innerHTML = `<div class="low-stock-compact">` + low.map(p => {
+      const store = D.stores.find(s => s.id === p.storeId);
+      const color = p.stock === 0 ? 'var(--red)' : 'var(--accent)';
+      return `<div class="lsc-row">
+        <div>
+          <div style="font-weight:600">${p.name}</div>
+          <div style="font-size:11px;color:var(--muted)">${store?.name || ''} · Min: ${p.minStock}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-family:system-ui,sans-serif;font-weight:800;font-size:20px;font-weight:800;color:${color}">${p.stock}</span>
+          <button class="btn btn-sm" style="font-size:11px" onclick="openEditStock(${p.id})">Güncelle</button>
+        </div>
+      </div>`;
+    }).join('') + `</div>`;
+  }
+}
+
+// ============================================================
+// STORES
+// ============================================================
+function renderStores() {
+  const el = document.getElementById('storeCards');
+  if (!D.stores.length) { el.innerHTML = '<div class="empty"><div class="ei">🏪</div><p>Mağaza eklenmedi</p></div>'; return; }
+  el.innerHTML = D.stores.map(s => {
+    const rev = D.sales.filter(x => x.storeId === s.id).reduce((a, b) => a + b.qty * b.price, 0);
+    const exp = D.expenses.filter(x => x.storeId === s.id).reduce((a, b) => a + b.amount, 0);
+    const prods = D.products.filter(x => x.storeId === s.id).length;
+    return `<div class="store-card">
+      <div class="store-card-head">
+        <div><div class="store-card-name">${s.name}</div><div class="store-card-sub">📍 ${s.city} · 👤 ${s.manager}</div></div>
+        <button class="btn-red" onclick="deleteStore(${s.id})">Sil</button>
+      </div>
+      <div class="store-metrics">
+        <div class="store-metric"><div class="store-metric-lbl">Gelir</div><div class="store-metric-val" style="color:var(--green)">${fmt(rev)}</div></div>
+        <div class="store-metric"><div class="store-metric-lbl">Gider</div><div class="store-metric-val" style="color:var(--red)">${fmt(exp)}</div></div>
+        <div class="store-metric"><div class="store-metric-lbl">Ürün</div><div class="store-metric-val" style="color:var(--blue)">${prods} adet</div></div>
+        <div class="store-metric"><div class="store-metric-lbl">Kâr</div><div class="store-metric-val" style="color:${rev-exp>=0?'var(--green)':'var(--red)'}">${fmt(rev-exp)}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// PRODUCTS
+// ============================================================
+function renderProducts() {
+  const sf = document.getElementById('prodStoreF')?.value || 'all';
+  const q = (document.getElementById('prodSearch')?.value || '').toLowerCase();
+  let prods = sf === 'all' ? D.products : D.products.filter(p => p.storeId == sf);
+  if (q) prods = prods.filter(p => p.name.toLowerCase().includes(q) || p.barcode?.includes(q));
+  const tb = document.getElementById('prodTbl');
+  if (!prods.length) { tb.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="ei">📦</div><p>Ürün bulunamadı</p></div></td></tr>`; return; }
+  tb.innerHTML = prods.map(p => {
+    const store = D.stores.find(s => s.id === p.storeId);
+    const status = p.stock === 0 ? '<span class="badge br">Tükendi</span>' : p.stock <= p.minStock ? '<span class="badge by">Düşük Stok</span>' : '<span class="badge bg">Yeterli</span>';
+    return `<tr>
+      <td><code style="font-size:11px;color:var(--muted)">${p.barcode || '-'}</code></td>
+      <td style="font-weight:600">${p.name}</td>
+      <td><span class="badge bb">${p.category}</span></td>
+      <td style="color:var(--accent);font-weight:700">${fmt(p.price)}</td>
+      <td><b>${p.stock}</b></td>
+      <td>${store?.name || '-'}</td>
+      <td>${status}</td>
+      <td><div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-blue" onclick="showBarcodeModal(${p.id})">🔖</button>
+        <button class="btn btn-sm" onclick="openEditStock(${p.id})">Stok</button>
+        <button class="btn-red" onclick="deleteProduct(${p.id})">Sil</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// SALES
+// ============================================================
+function renderSales() {
+  const sf = document.getElementById('saleStoreF')?.value || 'all';
+  let sales = sf === 'all' ? D.sales : D.sales.filter(s => s.storeId == sf);
+  // Staff only sees their own sales
+  if (!isManager() && currentUser) sales = sales.filter(s => s.userId === currentUser.id);
+  sales = [...sales].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const rev = sales.reduce((a, s) => a + s.qty * s.price, 0);
+  document.getElementById('saleStats').innerHTML = `
+    <div class="stat g"><div class="stat-lbl">${isManager() ? 'Toplam Gelir' : 'Ciron'}</div><div class="stat-val g">${fmt(rev)}</div></div>
+    <div class="stat y"><div class="stat-lbl">Satış Adedi</div><div class="stat-val y">${sales.length}</div></div>
+    <div class="stat b"><div class="stat-lbl">Ortalama</div><div class="stat-val b">${fmt(sales.length ? rev / sales.length : 0)}</div></div>
+  `;
+  const tb = document.getElementById('saleTbl');
+  if (!sales.length) { tb.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="ei">💰</div><p>Satış yok</p></div></td></tr>`; return; }
+  tb.innerHTML = sales.map(s => {
+    const p = D.products.find(x => x.id === s.productId);
+    const store = D.stores.find(x => x.id === s.storeId);
+    return `<tr>
+      <td>${fmtD(s.date)}</td>
+      <td style="font-weight:600">${p?.name || '-'}</td>
+      <td><code style="font-size:11px;color:var(--muted)">${p?.barcode || '-'}</code></td>
+      <td>${s.qty}</td>
+      <td>${fmt(s.price)}</td>
+      <td style="color:var(--green);font-weight:700">${fmt(s.qty * s.price)}</td>
+      <td>${store?.name || '-'}</td>
+      ${isManager() ? `<td style="font-size:11px;color:var(--muted)">${s.userName || '-'}</td>` : ''}
+      <td>${isManager() ? `<button class="btn-red" onclick="deleteSale(${s.id})">Sil</button>` : ''}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// EXPENSES
+// ============================================================
+function renderExpenses() {
+  const sf = document.getElementById('expStoreF')?.value || 'all';
+  let exps = sf === 'all' ? D.expenses : D.expenses.filter(e => e.storeId == sf);
+  exps = [...exps].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const total = exps.reduce((a, e) => a + e.amount, 0);
+  document.getElementById('expStats').innerHTML = `
+    <div class="stat r"><div class="stat-lbl">Toplam Gider</div><div class="stat-val r">${fmt(total)}</div></div>
+    <div class="stat y"><div class="stat-lbl">Kayıt Sayısı</div><div class="stat-val y">${exps.length}</div></div>
+    <div class="stat b"><div class="stat-lbl">Ortalama</div><div class="stat-val b">${fmt(exps.length ? total / exps.length : 0)}</div></div>
+  `;
+  const tb = document.getElementById('expTbl');
+  if (!exps.length) { tb.innerHTML = `<tr><td colspan="6"><div class="empty"><div class="ei">💸</div><p>Gider yok</p></div></td></tr>`; return; }
+  tb.innerHTML = exps.map(e => {
+    const store = D.stores.find(s => s.id === e.storeId);
+    return `<tr>
+      <td>${fmtD(e.date)}</td>
+      <td style="font-weight:600">${e.desc}</td>
+      <td><span class="badge by">${e.category}</span></td>
+      <td style="color:var(--red);font-weight:700">${fmt(e.amount)}</td>
+      <td>${store?.name || '-'}</td>
+      <td><button class="btn-red" onclick="deleteExpense(${e.id})">Sil</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ============================================================
+// REPORTS
+// ============================================================
+function renderReports() {
+  const rev = D.sales.reduce((a, s) => a + s.qty * s.price, 0);
+  const exp = D.expenses.reduce((a, e) => a + e.amount, 0);
+  const profit = rev - exp;
+  const margin = rev > 0 ? (profit / rev * 100).toFixed(1) : 0;
+  document.getElementById('repStats').innerHTML = `
+    <div class="stat g"><div class="stat-lbl">Gelir</div><div class="stat-val g">${fmt(rev)}</div></div>
+    <div class="stat r"><div class="stat-lbl">Gider</div><div class="stat-val r">${fmt(exp)}</div></div>
+    <div class="stat ${profit >= 0 ? 'g' : 'r'}"><div class="stat-lbl">Net Kâr</div><div class="stat-val ${profit >= 0 ? 'g' : 'r'}">${fmt(profit)}</div></div>
+    <div class="stat y"><div class="stat-lbl">Kâr Marjı</div><div class="stat-val y">%${margin}</div></div>
+  `;
+  const maxR = Math.max(...D.stores.map(s => D.sales.filter(x => x.storeId === s.id).reduce((a, b) => a + b.qty * b.price, 0)), 1);
+  document.getElementById('revChart').innerHTML = D.stores.map(s => {
+    const r = D.sales.filter(x => x.storeId === s.id).reduce((a, b) => a + b.qty * b.price, 0);
+    return `<div class="bar-row"><div class="bar-lbl">${s.name}</div><div class="bar-track"><div class="bar-fill" style="width:${(r / maxR * 100).toFixed(1)}%;background:var(--green)"></div></div><div class="bar-val">${fmt(r)}</div></div>`;
+  }).join('') || '<div class="empty"><p>Veri yok</p></div>';
+  const cats = {};
+  D.expenses.forEach(e => { cats[e.category] = (cats[e.category] || 0) + e.amount; });
+  const maxE = Math.max(...Object.values(cats), 1);
+  document.getElementById('expChart').innerHTML = Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([c, a]) =>
+    `<div class="bar-row"><div class="bar-lbl">${c}</div><div class="bar-track"><div class="bar-fill" style="width:${(a / maxE * 100).toFixed(1)}%;background:var(--red)"></div></div><div class="bar-val">${fmt(a)}</div></div>`
+  ).join('') || '<div class="empty"><p>Veri yok</p></div>';
+  const ps = {};
+  D.sales.forEach(s => { ps[s.productId] = (ps[s.productId] || 0) + s.qty * s.price; });
+  const maxP = Math.max(...Object.values(ps), 1);
+  document.getElementById('topPChart').innerHTML = Object.entries(ps).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([pid, r]) => {
+    const p = D.products.find(x => x.id == pid);
+    return `<div class="bar-row"><div class="bar-lbl">${p?.name || '-'}</div><div class="bar-track"><div class="bar-fill" style="width:${(r / maxP * 100).toFixed(1)}%;background:var(--accent)"></div></div><div class="bar-val">${fmt(r)}</div></div>`;
+  }).join('') || '<div class="empty"><p>Veri yok</p></div>';
+}
+
+// ============================================================
+// BARCODES
+// ============================================================
+function renderBarcodes(q) {
+  q = (q || '').toLowerCase();
+  let prods = q ? D.products.filter(p => p.name.toLowerCase().includes(q) || p.barcode?.includes(q)) : D.products;
+  const grid = document.getElementById('barcodeGrid');
+  if (!prods.length) { grid.innerHTML = '<div class="empty"><div class="ei">🔖</div><p>Ürün bulunamadı</p></div>'; return; }
+  grid.innerHTML = prods.map(p => {
+    const svgId = 'bc_' + p.id;
+    return `<div class="barcode-card">
+      <h4>${p.name}</h4>
+      <p>${p.barcode || 'Barkod yok'} · ${fmt(p.price)}</p>
+      <div class="barcode-svg-wrap">
+        ${p.barcode ? `<svg id="${svgId}"></svg>` : `<div style="color:#aaa;font-size:12px;padding:16px">Barkod yok</div>`}
+      </div>
+      <div class="bc-actions">
+        ${p.barcode ? `<button class="btn btn-sm" onclick="showBarcodeModal(${p.id})">🖨️ Yazdır</button>` : ''}
+        <button class="btn btn-sm btn-blue" onclick="assignBarcode(${p.id})">🔄 Barkod ${p.barcode ? 'Yenile' : 'Üret'}</button>
+      </div>
+    </div>`;
+  }).join('');
+  // Render SVGs after DOM update
+  setTimeout(() => {
+    prods.forEach(p => {
+      if (p.barcode) {
+        try {
+          JsBarcode('#bc_' + p.id, p.barcode, {
+            format: 'EAN13', width: 1.8, height: 50,
+            displayValue: true, fontSize: 11, margin: 4
+          });
+        } catch (e) {}
+      }
+    });
+  }, 50);
+}
+
+function assignBarcode(id) {
+  const p = D.products.find(x => x.id === id);
+  if (!p) return;
+  p.barcode = genEAN13();
+  save(); renderBarcodes(''); renderProducts();
+  toast('Barkod oluşturuldu: ' + p.barcode);
+}
+
+function generateAllBarcodes() {
+  D.products.forEach(p => { if (!p.barcode) p.barcode = genEAN13(); });
+  save(); renderBarcodes(''); renderProducts();
+  toast('Tüm barkodlar oluşturuldu!');
+}
+
+function showBarcodeModal(id) {
+  const p = D.products.find(x => x.id === id);
+  if (!p || !p.barcode) { toast('Önce barkod oluşturun!', 'error'); return; }
+  printBarcodeData = p;
+  const container = document.getElementById('print-barcode-content');
+  container.innerHTML = `
+    <div style="font-family:system-ui,sans-serif;font-weight:800;font-size:14px;font-weight:800;color:#000;margin-bottom:4px">${p.name}</div>
+    <div style="font-size:12px;color:#555;margin-bottom:10px">${fmt(p.price)}</div>
+    <svg id="modal-barcode"></svg>
+  `;
+  openM('printBarcode');
+  setTimeout(() => {
+    try {
+      JsBarcode('#modal-barcode', p.barcode, {
+        format: 'EAN13', width: 2.5, height: 70,
+        displayValue: true, fontSize: 13, margin: 8
+      });
+    } catch (e) {}
+  }, 60);
+}
+
+function doPrintBarcode() {
+  const content = document.getElementById('print-barcode-content').innerHTML;
+  const win = window.open('', '_blank');
+  win.document.write(`<html><head><title>Barkod</title><style>body{margin:0;display:flex;justify-content:center;padding:20px;font-family:sans-serif;}@media print{body{padding:0;}}</style></head><body>${content}</body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 300);
+}
+
+function downloadBarcode() {
+  if (!printBarcodeData) return;
+  const svg = document.getElementById('modal-barcode');
+  if (!svg) return;
+  const svgData = new XMLSerializer().serializeToString(svg);
+  const canvas = document.createElement('canvas');
+  const img = new Image();
+  img.onload = () => {
+    canvas.width = img.width; canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    const a = document.createElement('a');
+    a.download = printBarcodeData.name + '_barcode.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  };
+  img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+}
+
+function printAllBarcodes() {
+  const rows = D.products.filter(p => p.barcode).map(p => {
+    // Create SVG inline
+    return `<div style="display:inline-block;text-align:center;margin:10px;padding:10px;border:1px solid #eee;border-radius:6px">
+      <div style="font-weight:bold;font-size:12px;margin-bottom:3px">${p.name}</div>
+      <div style="font-size:11px;color:#666;margin-bottom:6px">${fmt(p.price)}</div>
+      <svg id="pbc_${p.id}"></svg>
+    </div>`;
+  }).join('');
+  const win = window.open('', '_blank');
+  win.document.write(`<html><head><title>Tüm Barkodlar</title>
+    <script>/* inline jsbarcode */<\/script>
+    <style>body{padding:20px;font-family:sans-serif;}@media print{body{padding:5px;}}</style>
+  </head><body>${rows}<script>
+    ${D.products.filter(p => p.barcode).map(p =>
+      `try{JsBarcode('#pbc_${p.id}','${p.barcode}',{format:'EAN13',width:1.8,height:50,displayValue:true,fontSize:10,margin:4});}catch(e){}`
+    ).join('\n')}
+  <\/script></body></html>`);
+  win.document.close();
+  setTimeout(() => { win.print(); }, 800);
+}
+
+// ============================================================
+// BARCODE SCANNER
+// ============================================================
+function setScanMode(mode) {
+  scanMode = mode;
+  const labels = { sale: '💰 Satış Yap', info: '🔍 Ürün Bilgisi', stock: '📦 Stok Görüntüle' };
+  document.getElementById('scanModeLabel').textContent = labels[mode] || mode;
+  toast('Mod: ' + labels[mode], 'success');
+  // Highlight active
+  document.querySelectorAll('.qa-btn').forEach((b, i) => {
+    const modes = ['sale', 'info', 'stock'];
+    b.style.borderColor = modes[i] === mode ? 'var(--accent)' : 'var(--border)';
+    b.style.background = modes[i] === mode ? 'rgba(240,180,41,0.1)' : '';
+  });
+}
+
+let scanStream = null;
+let scanAnimFrame = null;
+let barcodeDetector = null;
+
+// Per-tab scanner state
+const scanTabs = {};
+['sale','stockin','stockview'].forEach(t => {
+  scanTabs[t] = { stream: null, animFrame: null, running: false, detector: null };
+});
+
+function switchScanTab(tab) {
+  ['sale','stockin','stockview'].forEach(t => {
+    if (scanTabs[t].running) stopScannerTab(t);
+    document.getElementById('stab-content-' + t).style.display = t === tab ? 'block' : 'none';
+    document.getElementById('stab-' + t).classList.toggle('active', t === tab);
+  });
+}
+
+async function startScannerTab(tab) {
+  const st = scanTabs[tab];
+  if (st.running) return;
+  if ('BarcodeDetector' in window && !st.detector) {
+    try { st.detector = new BarcodeDetector({ formats: ['ean_13','ean_8','code_128','code_39','qr_code','upc_a','upc_e'] }); } catch(e) {}
+  }
+  try {
+    st.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } });
+  } catch(e) {
+    try { st.stream = await navigator.mediaDevices.getUserMedia({ video: true }); }
+    catch(e2) { toast('Kamera izni reddedildi. Tarayici ayarlarindan izin verin.', 'error'); return; }
+  }
+  const video = document.getElementById('sv-' + tab);
+  const ph = document.getElementById('sp-' + tab);
+  video.srcObject = st.stream;
+  video.style.display = 'block';
+  if (ph) ph.style.display = 'none';
+  st.running = true;
+  document.getElementById('startScanBtn-' + tab).style.display = 'none';
+  document.getElementById('stopScanBtn-' + tab).style.display = '';
+  toast('Kamera acildi! Barkodu tut.');
+  video.onloadedmetadata = () => { video.play(); scanLoopTab(tab); };
+}
+
+function scanLoopTab(tab) {
+  const st = scanTabs[tab];
+  if (!st.running) return;
+  const video = document.getElementById('sv-' + tab);
+  const canvas = document.getElementById('sc-' + tab);
+  if (!video || video.readyState < 2) { st.animFrame = setTimeout(() => scanLoopTab(tab), 300); return; }
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  if (st.detector) {
+    st.detector.detect(canvas).then(codes => { if (codes.length > 0) onTabScan(tab, codes[0].rawValue); }).catch(() => {});
+  } else if (window._zxingReader) {
+    try {
+      const img = new Image();
+      img.onload = () => { window._zxingReader.decodeFromImage(img).then(r => onTabScan(tab, r.getText())).catch(() => {}); };
+      img.src = canvas.toDataURL('image/png');
+    } catch(e) {}
+  } else if (!window._zxingLoading) {
+    window._zxingLoading = true;
+    const s = document.createElement('script');
+    // ZXing not available offline - use BarcodeDetector or manual entry
+    s.onerror = null; window._zxingLoading = false;
+    s.onload = () => { try { window._zxingReader = new ZXing.BrowserMultiFormatReader(); toast('Barkod motoru hazir!'); } catch(e) {} };
+    s.onerror = () => toast('Kutüphane yüklenemedi, manuel giriş kullanın.', 'error');
+    document.head.appendChild(s);
+  }
+  st.animFrame = setTimeout(() => scanLoopTab(tab), 400);
+}
+
+function stopScannerTab(tab) {
+  const st = scanTabs[tab];
+  st.running = false;
+  if (st.animFrame) { clearTimeout(st.animFrame); st.animFrame = null; }
+  if (st.stream) { st.stream.getTracks().forEach(t => t.stop()); st.stream = null; }
+  const video = document.getElementById('sv-' + tab);
+  const ph = document.getElementById('sp-' + tab);
+  if (video) { video.srcObject = null; video.style.display = 'none'; }
+  if (ph) ph.style.display = 'block';
+  document.getElementById('startScanBtn-' + tab).style.display = '';
+  document.getElementById('stopScanBtn-' + tab).style.display = 'none';
+}
+
+function stopScanner() { ['sale','stockin','stockview'].forEach(t => { if (scanTabs[t].running) stopScannerTab(t); }); }
+
+const _lastScan = {}; const _lastScanTime = {};
+function onTabScan(tab, code) {
+  const now = Date.now();
+  if (_lastScan[tab] === code && now - (_lastScanTime[tab]||0) < 3000) return;
+  _lastScan[tab] = code; _lastScanTime[tab] = now;
+  handleTabScan(tab, code);
+}
+
+function manualTab(tab) {
+  const val = document.getElementById('mb-' + tab).value.trim();
+  if (val) handleTabScan(tab, val);
+}
+
+function handleTabScan(tab, code) {
+  const product = D.products.find(p => p.barcode === code);
+  const resEl = document.getElementById('res-' + tab);
+  if (!product) {
+    resEl.innerHTML = `<div class="card" style="padding:16px;border-color:var(--red)"><div style="color:var(--red);font-weight:700;margin-bottom:4px">❌ Ürün Bulunamadı</div><div style="font-size:12px;color:var(--muted)">Barkod: <code>${code}</code></div></div>`;
+    return;
+  }
+  const store = D.stores.find(s => s.id === product.storeId);
+  const stockColor = product.stock === 0 ? 'var(--red)' : product.stock <= product.minStock ? 'var(--accent)' : 'var(--green)';
+  const stockLabel = product.stock === 0 ? '⛔ Tükendi' : product.stock <= product.minStock ? '⚠️ Düşük Stok' : '✅ Yeterli';
+
+  if (tab === 'sale') {
+    resEl.innerHTML = `<div class="card" style="padding:18px;border-color:var(--accent)">
+      <div style="font-family:system-ui,sans-serif;font-weight:800;font-size:16px;font-weight:800;margin-bottom:2px">${product.name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">${store?.name||'-'} · ${product.category}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+        <div style="background:var(--surface2);padding:10px;border-radius:8px;text-align:center"><div style="font-size:9px;color:var(--muted);margin-bottom:3px">FİYAT</div><div style="font-weight:800;color:var(--accent)">${fmt(product.price)}</div></div>
+        <div style="background:var(--surface2);padding:10px;border-radius:8px;text-align:center"><div style="font-size:9px;color:var(--muted);margin-bottom:3px">STOK</div><div style="font-weight:800;color:${stockColor}">${product.stock}</div></div>
+        <div style="background:var(--surface2);padding:10px;border-radius:8px;text-align:center"><div style="font-size:9px;color:var(--muted);margin-bottom:3px">DURUM</div><div style="font-weight:700;color:${stockColor};font-size:11px">${stockLabel}</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--surface2);padding:12px;border-radius:10px">
+        <input type="number" id="sale-qty-${product.id}" value="1" min="1" max="${product.stock}" style="width:70px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:8px;font-family:system-ui,sans-serif;font-weight:800;font-size:18px;font-weight:800;text-align:center;" oninput="updateSaleTotal(${product.id},${product.price})">
+        <span style="color:var(--muted);font-size:13px">adet × ${fmt(product.price)} =</span>
+        <span id="sale-total-${product.id}" style="font-family:system-ui,sans-serif;font-weight:800;font-weight:800;color:var(--green);font-size:16px">${fmt(product.price)}</span>
+        <button class="btn" style="margin-left:auto;white-space:nowrap" onclick="quickSaleFromScan(${product.id})">✅ Sat</button>
+      </div>
+    </div>`;
+  } else if (tab === 'stockin') {
+    resEl.innerHTML = `<div class="card" style="padding:18px;border-color:var(--blue)">
+      <div style="font-family:system-ui,sans-serif;font-weight:800;font-size:16px;font-weight:800;margin-bottom:2px">${product.name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">${store?.name||'-'}</div>
+      <div style="display:flex;align-items:center;gap:12px;background:var(--surface2);padding:14px;border-radius:10px;margin-bottom:12px">
+        <div><div style="font-size:10px;color:var(--muted)">MEVCUT STOK</div><div style="font-family:system-ui,sans-serif;font-weight:800;font-size:32px;font-weight:800;color:${stockColor}">${product.stock}</div></div>
+        <div style="font-size:28px;color:var(--muted);font-weight:300">+</div>
+        <div style="flex:1"><div style="font-size:10px;color:var(--muted);margin-bottom:4px">EKLENECEK MİKTAR</div>
+        <input type="number" id="si-qty-${product.id}" value="1" min="1" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-family:system-ui,sans-serif;font-weight:800;font-size:22px;font-weight:800;text-align:center;"></div>
+      </div>
+      <button class="btn btn-blue" style="width:100%" onclick="addStockFromScan(${product.id})">📥 Stoğa Ekle</button>
+    </div>`;
+  } else {
+    resEl.innerHTML = `<div class="card" style="padding:18px;border-color:var(--green)">
+      <div style="font-family:system-ui,sans-serif;font-weight:800;font-size:16px;font-weight:800;margin-bottom:2px">${product.name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">${store?.name||'-'} · ${product.category} · <code style="font-size:11px">${product.barcode}</code></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div style="background:var(--surface2);padding:14px;border-radius:10px"><div style="font-size:10px;color:var(--muted);margin-bottom:6px">MEVCUT STOK</div><div style="font-family:system-ui,sans-serif;font-weight:800;font-size:32px;font-weight:800;color:${stockColor}">${product.stock}</div><div style="font-size:11px;color:${stockColor};margin-top:2px">${stockLabel}</div></div>
+        <div style="background:var(--surface2);padding:14px;border-radius:10px"><div style="font-size:10px;color:var(--muted);margin-bottom:6px">SATIŞ FİYATI</div><div style="font-family:system-ui,sans-serif;font-weight:800;font-size:22px;font-weight:800;color:var(--accent)">${fmt(product.price)}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">Min stok: ${product.minStock}</div></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="switchScanTab('sale');document.getElementById('mb-sale').value='${product.barcode}';manualTab('sale')">💰 Satış Yap</button>
+        <button class="btn btn-sm btn-blue" onclick="switchScanTab('stockin');document.getElementById('mb-stockin').value='${product.barcode}';manualTab('stockin')">📥 Stok Ekle</button>
+        <button class="btn btn-sm" onclick="showBarcodeModal(${product.id})">🔖 Barkod</button>
+      </div>
+    </div>`;
+  }
+}
+
+function updateSaleTotal(pid, price) {
+  const qty = parseInt(document.getElementById('sale-qty-' + pid)?.value) || 1;
+  const el = document.getElementById('sale-total-' + pid);
+  if (el) el.textContent = fmt(qty * price);
+}
+
+function quickSaleFromScan(pid) {
+  const p = D.products.find(x => x.id === pid);
+  if (!p) return;
+  const qty = parseInt(document.getElementById('sale-qty-' + pid)?.value) || 1;
+  if (p.stock < qty) { toast('Yetersiz stok! Mevcut: ' + p.stock, 'error'); return; }
+  p.stock -= qty;
+  D.sales.push({ id: ++D.nextId, productId: pid, storeId: p.storeId, qty, price: p.price, date: today() });
+  save(); renderSales(); renderProducts(); renderDashboard();
+  toast('✅ Satış kaydedildi! ' + fmt(qty * p.price));
+  handleTabScan('sale', p.barcode);
+}
+
+function addStockFromScan(pid) {
+  const p = D.products.find(x => x.id === pid);
+  if (!p) return;
+  const add = parseInt(document.getElementById('si-qty-' + pid)?.value) || 1;
+  p.stock += add;
+  save(); renderProducts(); renderDashboard();
+  toast('📥 ' + add + ' adet eklendi! Yeni stok: ' + p.stock);
+  handleTabScan('stockin', p.barcode);
+}
+
+
+// ============================================================
+// MODALS
+// ============================================================
+function openM(id) {
+  updateSelectors();
+  if (id === 'addSale') {
+    // Auto-select active store
+    const sel = document.getElementById('i-salStore');
+    if (activeStore !== 'all' && sel) { sel.value = activeStore; }
+    updateSaleProd();
+    document.getElementById('i-salDate').value = today();
+  }
+  if (id === 'addExpense') {
+    const sel = document.getElementById('i-eStore');
+    if (activeStore !== 'all' && sel) sel.value = activeStore;
+    document.getElementById('i-eDate').value = today();
+  }
+  if (id === 'addProduct') {
+    const sel = document.getElementById('i-pStore');
+    if (activeStore !== 'all' && sel) sel.value = activeStore;
+  }
+  document.getElementById('m-' + id).classList.add('open');
+}
+function closeM() { document.querySelectorAll('.overlay').forEach(o => o.classList.remove('open')); }
+
+function openEditStock(id) {
+  const p = D.products.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('es-id').value = id;
+  document.getElementById('es-qty').value = p.stock;
+  document.getElementById('es-name').textContent = '📦 ' + p.name;
+  openM('editStock');
+}
+
+function genBarcode() {
+  document.getElementById('i-pBarcode').value = genEAN13();
+}
+
+// ============================================================
+// ADD / DELETE
+// ============================================================
+function addStore() {
+  const name = document.getElementById('i-sName').value.trim();
+  const city = document.getElementById('i-sCity').value.trim();
+  const manager = document.getElementById('i-sMgr').value.trim();
+  if (!name) { toast('Mağaza adı gerekli!', 'error'); return; }
+  D.stores.push({ id: ++D.nextId, name, city, manager });
+  save(); updateSelectors(); renderStores(); renderDashboard(); closeM();
+  toast('Mağaza eklendi!');
+  ['i-sName', 'i-sCity', 'i-sMgr'].forEach(id => document.getElementById(id).value = '');
+}
+
+function addProduct() {
+  const name = document.getElementById('i-pName').value.trim();
+  const category = document.getElementById('i-pCat').value.trim();
+  const storeId = parseInt(document.getElementById('i-pStore').value);
+  const price = parseFloat(document.getElementById('i-pPrice').value) || 0;
+  const stock = parseInt(document.getElementById('i-pStock').value) || 0;
+  const minStock = parseInt(document.getElementById('i-pMinStock').value) || 5;
+  let barcode = document.getElementById('i-pBarcode').value.trim() || genEAN13();
+  if (!name || !storeId) { toast('Ürün adı ve mağaza gerekli!', 'error'); return; }
+  D.products.push({ id: ++D.nextId, name, category, storeId, price, stock, minStock, barcode });
+  save(); renderProducts(); renderDashboard(); renderBarcodes(''); closeM();
+  toast('Ürün eklendi! Barkod: ' + barcode);
+  ['i-pName', 'i-pCat', 'i-pPrice', 'i-pStock', 'i-pBarcode'].forEach(id => document.getElementById(id).value = '');
+}
+
+function updateSaleProd() {
+  const sid = parseInt(document.getElementById('i-salStore').value);
+  const sel = document.getElementById('i-salProd');
+  const prods = D.products.filter(p => p.storeId === sid);
+  sel.innerHTML = prods.map(p => `<option value="${p.id}">${p.name} (Stok:${p.stock})</option>`).join('');
+  fillSalePrice();
+}
+
+function fillSalePrice() {
+  const pid = parseInt(document.getElementById('i-salProd').value);
+  const p = D.products.find(x => x.id === pid);
+  if (p) document.getElementById('i-salPrice').value = p.price;
+}
+
+function addSale() {
+  const sid = parseInt(document.getElementById('i-salStore').value);
+  const pid = parseInt(document.getElementById('i-salProd').value);
+  const qty = parseInt(document.getElementById('i-salQty').value) || 1;
+  const price = parseFloat(document.getElementById('i-salPrice').value) || 0;
+  const date = document.getElementById('i-salDate').value;
+  if (!sid || !pid) { toast('Mağaza ve ürün seçin!', 'error'); return; }
+  const p = D.products.find(x => x.id === pid);
+  if (p && p.stock < qty) { toast('Yetersiz stok! Mevcut: ' + p.stock, 'error'); return; }
+  if (p) p.stock -= qty;
+  D.sales.push({ id: ++D.nextId, productId: pid, storeId: sid, qty, price, date, userId: currentUser?.id, userName: currentUser?.name });
+  save(); renderSales(); renderProducts(); renderDashboard(); closeM();
+  toast('Satış kaydedildi!');
+}
+
+function addExpense() {
+  const desc = document.getElementById('i-eDesc').value.trim();
+  const category = document.getElementById('i-eCat').value;
+  const storeId = parseInt(document.getElementById('i-eStore').value);
+  const amount = parseFloat(document.getElementById('i-eAmt').value) || 0;
+  const date = document.getElementById('i-eDate').value;
+  if (!desc || !storeId) { toast('Açıklama ve mağaza gerekli!', 'error'); return; }
+  D.expenses.push({ id: ++D.nextId, desc, category, storeId, amount, date });
+  save(); renderExpenses(); renderDashboard(); closeM();
+  toast('Gider kaydedildi!');
+  ['i-eDesc', 'i-eAmt'].forEach(id => document.getElementById(id).value = '');
+}
+
+function doEditStock() {
+  const id = parseInt(document.getElementById('es-id').value);
+  const qty = parseInt(document.getElementById('es-qty').value) || 0;
+  const p = D.products.find(x => x.id === id);
+  if (p) { p.stock = qty; save(); renderProducts(); renderDashboard(); }
+  closeM(); toast('Stok güncellendi!');
+}
+
+function deleteStore(id) {
+  if (!confirm('Bu mağazayı silmek istediğinizden emin misiniz?')) return;
+  D.stores = D.stores.filter(s => s.id !== id);
+  D.products = D.products.filter(p => p.storeId !== id);
+  D.sales = D.sales.filter(s => s.storeId !== id);
+  D.expenses = D.expenses.filter(e => e.storeId !== id);
+  save(); updateSelectors(); renderAll(); toast('Mağaza silindi!');
+}
+
+function deleteProduct(id) {
+  if (!confirm('Bu ürünü silmek istiyor musunuz?')) return;
+  D.products = D.products.filter(p => p.id !== id);
+  save(); renderProducts(); renderDashboard(); renderBarcodes(''); toast('Ürün silindi!');
+}
+
+function deleteSale(id) {
+  if (!confirm('Bu satışı silmek istiyor musunuz?')) return;
+  D.sales = D.sales.filter(s => s.id !== id);
+  save(); renderSales(); renderDashboard(); toast('Satış silindi!');
+}
+
+function deleteExpense(id) {
+  if (!confirm('Bu gideri silmek istiyor musunuz?')) return;
+  D.expenses = D.expenses.filter(e => e.id !== id);
+  save(); renderExpenses(); renderDashboard(); toast('Gider silindi!');
+}
+
+// Responsive
+
+// ============================================================
+// PERSONNEL MANAGEMENT
+// ============================================================
+function renderPersonnel() {
+  if (!isManager()) return;
+  const staff = D.users.filter(u => u.role === 'staff');
+  const now = new Date();
+  const monthFilter = document.getElementById('staffMonthFilter')?.value;
+
+  // Populate month filter
+  const mSel = document.getElementById('staffMonthFilter');
+  if (mSel && mSel.options.length <= 1) {
+    const months = new Set(D.sales.map(s => s.date?.slice(0,7)));
+    months.forEach(m => {
+      if (!m) return;
+      const o = document.createElement('option');
+      o.value = m;
+      const [y, mo] = m.split('-');
+      o.textContent = new Date(y, mo-1).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+      mSel.appendChild(o);
+    });
+  }
+
+  const filterMonth = monthFilter || now.toISOString().slice(0,7);
+
+  // Monthly stats cards
+  const totalMonthSales = D.sales.filter(s => s.date?.startsWith(filterMonth));
+  const totalRev = totalMonthSales.reduce((a,s) => a + s.qty * s.price, 0);
+  document.getElementById('staffMonthlyStats').innerHTML = `
+    <div class="stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:0">
+      <div class="stat b"><div class="stat-lbl">Bu Ay Toplam Ciro</div><div class="stat-val b">${fmt(totalRev)}</div></div>
+      <div class="stat g"><div class="stat-lbl">Bu Ay Satış Adedi</div><div class="stat-val g">${totalMonthSales.reduce((a,s)=>a+s.qty,0)}</div></div>
+      <div class="stat y"><div class="stat-lbl">Aktif Personel</div><div class="stat-val y">${staff.length}</div></div>
+    </div>`;
+
+  // Staff table
+  const tb = document.getElementById('staffTable');
+  if (!staff.length) {
+    tb.innerHTML = `<tr><td colspan="7"><div class="empty"><div class="ei">👥</div><p>Henüz personel eklenmedi</p></div></td></tr>`;
+    return;
+  }
+  tb.innerHTML = staff.map(u => {
+    const mySales = D.sales.filter(s => s.userId === u.id && s.date?.startsWith(filterMonth));
+    const totalSales = D.sales.filter(s => s.userId === u.id);
+    const monthRev = mySales.reduce((a,s) => a + s.qty * s.price, 0);
+    const totalRevAll = totalSales.reduce((a,s) => a + s.qty * s.price, 0);
+    return `<tr>
+      <td style="font-weight:700">${u.name}</td>
+      <td><code style="font-size:12px;color:var(--muted)">@${u.username}</code></td>
+      <td><span style="font-weight:700;color:var(--blue)">${mySales.reduce((a,s)=>a+s.qty,0)} adet</span></td>
+      <td style="font-weight:700;color:var(--green)">${fmt(monthRev)}</td>
+      <td style="color:var(--muted)">${fmt(totalRevAll)}</td>
+      <td>${u.canStockEntry ? '<span class="badge bg">✓ Var</span>' : '<span class="badge br">✗ Yok</span>'}</td>
+      <td><div style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-blue" onclick="showStaffDetail(${u.id},'${filterMonth}')">📊 Detay</button>
+        <button class="btn btn-sm" onclick="openEditStaff(${u.id})">✏️</button>
+        <button class="btn-red" onclick="deleteStaff(${u.id})">Sil</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function showStaffDetail(userId, month) {
+  const u = D.users.find(x => x.id === userId);
+  if (!u) return;
+  const sales = D.sales.filter(s => s.userId === userId && (!month || s.date?.startsWith(month)));
+  document.getElementById('staffDetailTitle').textContent = `📊 ${u.name} — Satış Detayı`;
+  const tb = document.getElementById('staffDetailTable');
+  if (!sales.length) {
+    tb.innerHTML = `<tr><td colspan="4"><div class="empty"><div class="ei">💰</div><p>Bu dönemde satış yok</p></div></td></tr>`;
+  } else {
+    tb.innerHTML = [...sales].sort((a,b) => new Date(b.date)-new Date(a.date)).map(s => {
+      const p = D.products.find(x => x.id === s.productId);
+      return `<tr><td>${fmtD(s.date)}</td><td>${p?.name||'-'}</td><td>${s.qty}</td><td style="color:var(--green);font-weight:700">${fmt(s.qty*s.price)}</td></tr>`;
+    }).join('');
+  }
+  document.getElementById('staffDetailCard').style.display = 'block';
+  document.getElementById('staffDetailCard').scrollIntoView({ behavior: 'smooth' });
+}
+
+function addStaff() {
+  const name = document.getElementById('i-stName').value.trim();
+  const username = document.getElementById('i-stUser').value.trim().toLowerCase();
+  const password = document.getElementById('i-stPass').value;
+  const canStockEntry = document.getElementById('i-stStock').checked;
+  if (!name || !username || !password) { toast('Tüm alanları doldurun!', 'error'); return; }
+  if (D.users.find(u => u.username === username)) { toast('Bu kullanıcı adı zaten var!', 'error'); return; }
+  D.users.push({ id: ++D.nextId, username, password, name, role: 'staff', storeId: 1, canStockEntry });
+  save(); renderPersonnel(); closeM();
+  toast('Personel eklendi: ' + name);
+  ['i-stName','i-stUser','i-stPass'].forEach(id => document.getElementById(id).value = '');
+}
+
+function openEditStaff(id) {
+  const u = D.users.find(x => x.id === id);
+  if (!u) return;
+  document.getElementById('i-editStId').value = id;
+  document.getElementById('i-editStName').value = u.name;
+  document.getElementById('i-editStPass').value = '';
+  document.getElementById('i-editStStock').checked = !!u.canStockEntry;
+  openM('editStaff');
+}
+
+function saveStaff() {
+  const id = parseInt(document.getElementById('i-editStId').value);
+  const u = D.users.find(x => x.id === id);
+  if (!u) return;
+  u.name = document.getElementById('i-editStName').value.trim() || u.name;
+  const newPass = document.getElementById('i-editStPass').value;
+  if (newPass) u.password = newPass;
+  u.canStockEntry = document.getElementById('i-editStStock').checked;
+  save(); renderPersonnel(); closeM();
+  toast('Personel güncellendi!');
+  applyRoleUI(); // refresh stockin tab visibility if editing current user
+}
+
+function deleteStaff(id) {
+  if (!confirm('Bu personeli silmek istiyor musunuz?')) return;
+  D.users = D.users.filter(u => u.id !== id);
+  save(); renderPersonnel();
+  toast('Personel silindi!');
+}
+
+// Override quickSaleFromScan to track user
+const _origQuickSale = quickSaleFromScan;
+function quickSaleFromScan(pid) {
+  const p = D.products.find(x => x.id === pid);
+  if (!p) return;
+  const qty = parseInt(document.getElementById('sale-qty-' + pid)?.value) || 1;
+  if (p.stock < qty) { toast('Yetersiz stok! Mevcut: ' + p.stock, 'error'); return; }
+  p.stock -= qty;
+  D.sales.push({ id: ++D.nextId, productId: pid, storeId: p.storeId, qty, price: p.price, date: today(), userId: currentUser?.id, userName: currentUser?.name });
+  save(); renderSales(); renderProducts(); renderDashboard();
+  toast('✅ Satış kaydedildi! ' + fmt(qty * p.price));
+  handleTabScan('sale', p.barcode);
+}
+
+</script>
+</body>
+</html>
